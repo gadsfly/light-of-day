@@ -168,6 +168,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
+  z-index: 10;
 }
 
 .nav-controls {
@@ -224,6 +226,7 @@ body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 5;
 }
 
 .nav-link {
