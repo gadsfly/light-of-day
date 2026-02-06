@@ -32,7 +32,7 @@
         <div class="nav-links" id="nav-links">
             <a href="#" data-page="home" class="nav-link active" data-i18n="nav.home">Home</a>
             <a href="#" data-page="single" class="nav-link" data-i18n="nav.single">Draw</a>
-            <a href="#" data-page="three-card" class="nav-link" data-i18n="nav.three">Three Cards</a>
+            <a href="#" data-page="spreads" class="nav-link" data-i18n="nav.spreads">Spreads</a>
             <a href="#" data-page="journal" class="nav-link" data-i18n="nav.journal">Journal</a>
             <a href="#" data-page="library" class="nav-link" data-i18n="nav.library">Library</a>
         </div>
@@ -69,10 +69,10 @@
                     <h3 data-i18n="home.feat1.title">Draw a Card</h3>
                     <p data-i18n="home.feat1.desc">One card, one moment of clarity</p>
                 </div>
-                <div class="feature" data-page="three-card">
+                <div class="feature" data-page="spreads">
                     <span class="feature-icon">🔮</span>
-                    <h3 data-i18n="home.feat2.title">Three Cards</h3>
-                    <p data-i18n="home.feat2.desc">Where you've been, where you are, where you're going</p>
+                    <h3 data-i18n="home.feat2.title">Spreads</h3>
+                    <p data-i18n="home.feat2.desc">10 unique spreads — love, self-discovery &amp; more</p>
                 </div>
                 <div class="feature" data-page="journal">
                     <span class="feature-icon">📔</span>
@@ -140,67 +140,57 @@
         </div>
     </section>
 
-    <!-- ========== THREE CARD SPREAD PAGE ========== -->
-    <section id="page-three-card" class="page">
+    <!-- ========== SPREADS PAGE (universal) ========== -->
+    <section id="page-spreads" class="page">
         <div class="reading-container">
-            <h2 class="section-title" data-i18n="three.title">Past · Present · Future</h2>
-            <p class="section-subtitle" data-i18n="three.subtitle">Three cards to gently illuminate your path</p>
+            <h2 class="section-title" data-i18n="spreads.title">Choose a Spread</h2>
+            <p class="section-subtitle" data-i18n="spreads.subtitle">Each spread tells a different kind of story</p>
 
-            <div class="question-input-container">
-                <input type="text" id="question-input-three" 
-                       data-i18n-placeholder="three.placeholder"
-                       placeholder="What do you seek clarity on? (optional)" 
-                       class="question-input" autocomplete="off">
+            <!-- Spread Picker -->
+            <div id="spread-picker" class="spread-picker">
+                <div class="spread-category-filters">
+                    <button class="filter-btn active" data-spread-cat="all" data-i18n="spreads.cat.all">All</button>
+                    <button class="filter-btn" data-spread-cat="love" data-i18n="spreads.cat.love">💗 Love</button>
+                    <button class="filter-btn" data-spread-cat="self" data-i18n="spreads.cat.self">🧘 Self</button>
+                    <button class="filter-btn" data-spread-cat="general" data-i18n="spreads.cat.general">✨ General</button>
+                    <button class="filter-btn" data-spread-cat="classic" data-i18n="spreads.cat.classic">✝️ Classic</button>
+                </div>
+                <div id="spread-grid" class="spread-grid"></div>
             </div>
 
-            <button class="btn-primary" id="draw-three-btn" data-i18n="three.draw">✦ Shuffle &amp; Draw Three ✦</button>
+            <!-- Active Spread (dynamic) -->
+            <div id="spread-active" class="spread-active" style="display:none;">
+                <button class="btn-ghost spread-back-btn" id="spread-back-btn">← <span data-i18n="spreads.back">Back to spreads</span></button>
+                <h3 class="spread-active-title" id="spread-active-title"></h3>
+                <p class="spread-active-desc" id="spread-active-desc"></p>
 
-            <div class="three-card-spread" id="three-card-spread" style="display:none;">
-                <div class="spread-position" data-position="past">
-                    <h3 class="position-label" data-i18n="three.past">Past</h3>
-                    <div class="tarot-card" data-spread-index="0">
-                        <div class="card-inner">
-                            <div class="card-front"></div>
-                            <div class="card-back"><div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div></div>
+                <div class="question-input-container">
+                    <input type="text" id="question-input-spread"
+                           data-i18n-placeholder="spreads.placeholder"
+                           placeholder="What's on your heart? (optional)"
+                           class="question-input" autocomplete="off">
+                </div>
+
+                <button class="btn-primary" id="draw-spread-btn" data-i18n="spreads.draw">✦ Shuffle &amp; Draw ✦</button>
+
+                <div id="spread-cards-area" class="spread-cards-area" style="display:none;"></div>
+                <div class="reading-result" id="spread-result" style="display:none;"></div>
+
+                <div class="reflection-area" id="reflection-area-spread" style="display:none;">
+                    <div class="reflection-prompt">
+                        <p class="reflection-question" id="reflection-question-spread"></p>
+                        <textarea id="reflection-input-spread" class="reflection-input" rows="4"
+                                  data-i18n-placeholder="reflect.placeholder"
+                                  placeholder="Whatever comes to mind... there are no wrong answers"></textarea>
+                        <div class="reflection-actions">
+                            <button class="btn-gentle" id="save-reflection-spread-btn" data-i18n="reflect.save">💜 Save to Journal</button>
+                            <button class="btn-ghost" id="skip-reflection-spread-btn" data-i18n="reflect.skip">Not right now</button>
                         </div>
                     </div>
                 </div>
-                <div class="spread-position" data-position="present">
-                    <h3 class="position-label" data-i18n="three.present">Present</h3>
-                    <div class="tarot-card" data-spread-index="1">
-                        <div class="card-inner">
-                            <div class="card-front"></div>
-                            <div class="card-back"><div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="spread-position" data-position="future">
-                    <h3 class="position-label" data-i18n="three.future">Future</h3>
-                    <div class="tarot-card" data-spread-index="2">
-                        <div class="card-inner">
-                            <div class="card-front"></div>
-                            <div class="card-back"><div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div></div>
-                        </div>
-                    </div>
-                </div>
+
+                <button class="btn-secondary" id="reset-spread-btn" style="display:none;" data-i18n="spreads.again">✦ Draw Again ✦</button>
             </div>
-
-            <div class="reading-result" id="three-card-result" style="display:none;"></div>
-
-            <div class="reflection-area" id="reflection-area-three" style="display:none;">
-                <div class="reflection-prompt">
-                    <p class="reflection-question" id="reflection-question-three"></p>
-                    <textarea id="reflection-input-three" class="reflection-input" rows="4"
-                              data-i18n-placeholder="reflect.placeholder"
-                              placeholder="Whatever comes to mind... there are no wrong answers"></textarea>
-                    <div class="reflection-actions">
-                        <button class="btn-gentle" id="save-reflection-three-btn" data-i18n="reflect.save">💜 Save to Journal</button>
-                        <button class="btn-ghost" id="skip-reflection-three-btn" data-i18n="reflect.skip">Not right now</button>
-                    </div>
-                </div>
-            </div>
-
-            <button class="btn-secondary" id="reset-three-btn" style="display:none;" data-i18n="three.again">✦ Draw Again ✦</button>
         </div>
     </section>
 
@@ -264,6 +254,7 @@
 
     <script src="js/i18n.js"></script>
     <script src="js/tarot-data.js"></script>
+    <script src="js/spreads.js"></script>
     <script src="js/journal.js"></script>
     <script src="js/app.js"></script>
 </body>

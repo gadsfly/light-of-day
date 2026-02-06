@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   createStars();
   setupNavigation();
   setupSingleDraw();
-  setupThreeCardDraw();
+  setupSpreadPicker();
+  setupUniversalSpread();
   setupLibrary();
   setupModal();
   setupThemeToggle();
@@ -293,145 +294,260 @@ function renderSingleResult(container, card, reversed) {
 }
 
 /* ═══════════════════════════════════════
-   THREE CARD SPREAD
+   SPREAD PICKER
    ═══════════════════════════════════════ */
-function setupThreeCardDraw() {
-  const drawBtn = document.getElementById('draw-three-btn');
-  const spreadArea = document.getElementById('three-card-spread');
-  const resultArea = document.getElementById('three-card-result');
-  const resetBtn = document.getElementById('reset-three-btn');
-  const reflectionArea = document.getElementById('reflection-area-three');
-  const reflectionQuestion = document.getElementById('reflection-question-three');
-  const reflectionInput = document.getElementById('reflection-input-three');
-  const saveBtn = document.getElementById('save-reflection-three-btn');
-  const skipBtn = document.getElementById('skip-reflection-three-btn');
+let currentSpreadCat = 'all';
 
-  let drawnCards = [];
-  let reversedStates = [];
-  let flippedCount = 0;
+function setupSpreadPicker() {
+  const catBtns = document.querySelectorAll('[data-spread-cat]');
+  renderSpreadGrid('all');
+
+  catBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      catBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentSpreadCat = btn.dataset.spreadCat;
+      renderSpreadGrid(currentSpreadCat);
+    });
+  });
+}
+
+function renderSpreadGrid(cat) {
+  const grid = document.getElementById('spread-grid');
+  if (!grid) return;
+
+  const spreads = cat === 'all' ? SPREADS : SPREADS.filter(s => s.category === cat);
+  const cardWord = i18n.t('spreads.cards') || 'cards';
+  const cardWordSingle = i18n.t('spreads.card') || 'card';
+
+  grid.innerHTML = spreads.map(s => {
+    const name = i18n.t(s.nameKey) || s.id;
+    const desc = i18n.t(s.descKey) || '';
+    const count = s.cardCount;
+    const countLabel = count === 1 ? `1 ${cardWordSingle}` : `${count} ${cardWord}`;
+
+    return `
+      <div class="spread-tile" data-spread-id="${s.id}">
+        <span class="spread-tile-icon">${s.icon}</span>
+        <h3 class="spread-tile-name">${name}</h3>
+        <p class="spread-tile-desc">${desc}</p>
+        <span class="spread-tile-count">${countLabel}</span>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.spread-tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+      activateSpread(tile.dataset.spreadId);
+    });
+  });
+}
+
+/* ═══════════════════════════════════════
+   UNIVERSAL SPREAD ENGINE
+   ═══════════════════════════════════════ */
+let activeSpread = null;
+let spreadDrawnCards = [];
+let spreadReversedStates = [];
+let spreadFlippedCount = 0;
+
+function activateSpread(spreadId) {
+  activeSpread = getSpread(spreadId);
+  if (!activeSpread) return;
+
+  const picker = document.getElementById('spread-picker');
+  const active = document.getElementById('spread-active');
+  const title = document.getElementById('spread-active-title');
+  const desc = document.getElementById('spread-active-desc');
+  const drawBtn = document.getElementById('draw-spread-btn');
+  const cardsArea = document.getElementById('spread-cards-area');
+  const resultArea = document.getElementById('spread-result');
+  const reflectionArea = document.getElementById('reflection-area-spread');
+  const resetBtn = document.getElementById('reset-spread-btn');
+
+  // Reset
+  cardsArea.style.display = 'none';
+  cardsArea.innerHTML = '';
+  resultArea.style.display = 'none';
+  reflectionArea.style.display = 'none';
+  resetBtn.style.display = 'none';
+  drawBtn.style.display = 'inline-block';
+
+  title.textContent = `${activeSpread.icon} ${i18n.t(activeSpread.nameKey) || activeSpread.id}`;
+  desc.textContent = i18n.t(activeSpread.descKey) || '';
+
+  picker.style.display = 'none';
+  active.style.display = 'block';
+
+  // Apply i18n to newly visible elements
+  i18n.apply();
+}
+
+function setupUniversalSpread() {
+  const backBtn = document.getElementById('spread-back-btn');
+  const drawBtn = document.getElementById('draw-spread-btn');
+  const resetBtn = document.getElementById('reset-spread-btn');
+  const saveBtn = document.getElementById('save-reflection-spread-btn');
+  const skipBtn = document.getElementById('skip-reflection-spread-btn');
 
   if (!drawBtn) return;
 
+  // Back to picker
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      document.getElementById('spread-picker').style.display = 'block';
+      document.getElementById('spread-active').style.display = 'none';
+      activeSpread = null;
+    });
+  }
+
+  // Draw
   drawBtn.addEventListener('click', () => {
+    if (!activeSpread) return;
+
+    const cardsArea = document.getElementById('spread-cards-area');
+    const resultArea = document.getElementById('spread-result');
+    const reflectionArea = document.getElementById('reflection-area-spread');
+
     // Reset
-    spreadArea.style.display = 'none';
+    cardsArea.innerHTML = '';
     resultArea.style.display = 'none';
     reflectionArea.style.display = 'none';
     resetBtn.style.display = 'none';
-    flippedCount = 0;
+    spreadFlippedCount = 0;
 
-    // Pick 3 unique cards
+    // Pick N unique cards
     const shuffled = [...TAROT_DECK].sort(() => Math.random() - 0.5);
-    drawnCards = shuffled.slice(0, 3);
-    reversedStates = drawnCards.map(() => Math.random() < 0.3);
+    spreadDrawnCards = shuffled.slice(0, activeSpread.cardCount);
+    spreadReversedStates = spreadDrawnCards.map(() => Math.random() < 0.3);
 
-    // Build card fronts
-    const positions = spreadArea.querySelectorAll('.spread-position');
-    positions.forEach((pos, idx) => {
-      const card = drawnCards[idx];
-      const tarotCard = pos.querySelector('.tarot-card');
-      const cardFront = pos.querySelector('.card-front');
-      tarotCard.classList.remove('flipped', 'reversed');
+    // Build card positions dynamically
+    const isLargeSpread = activeSpread.cardCount > 5;
+    cardsArea.className = `spread-cards-area spread-cards-${activeSpread.cardCount}`;
+
+    activeSpread.positions.forEach((pos, idx) => {
+      const card = spreadDrawnCards[idx];
+      const reversed = spreadReversedStates[idx];
+      const label = i18n.t(pos.labelKey) || `Position ${idx + 1}`;
+
+      const posEl = document.createElement('div');
+      posEl.className = 'spread-position';
+      posEl.style.animationDelay = `${idx * 0.15}s`;
+
+      posEl.innerHTML = `
+        <h3 class="position-label">${label}</h3>
+        <div class="tarot-card ${isLargeSpread ? 'tarot-card-sm' : ''} ${reversed ? 'reversed' : ''}">
+          <div class="card-inner">
+            <div class="card-front"></div>
+            <div class="card-back">
+              <div class="card-back-design${isLargeSpread ? ' mini' : ''}">
+                <div class="card-back-pattern"></div>
+                <span class="card-back-symbol">✦</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const cardFront = posEl.querySelector('.card-front');
       buildCardFront(cardFront, card);
-      if (reversedStates[idx]) tarotCard.classList.add('reversed');
 
-      // Remove old listener
-      const newCard = tarotCard.cloneNode(true);
-      tarotCard.parentNode.replaceChild(newCard, tarotCard);
+      const tarotCard = posEl.querySelector('.tarot-card');
+      tarotCard.addEventListener('click', () => {
+        if (tarotCard.classList.contains('flipped')) return;
+        tarotCard.classList.add('flipped');
+        createSparkles(tarotCard);
+        spreadFlippedCount++;
 
-      newCard.addEventListener('click', () => {
-        if (newCard.classList.contains('flipped')) return;
-        newCard.classList.add('flipped');
-        createSparkles(newCard);
-        flippedCount++;
-
-        // All flipped? Show reading
-        if (flippedCount === 3) {
+        if (spreadFlippedCount === activeSpread.cardCount) {
           setTimeout(() => {
-            renderThreeResult(resultArea, drawnCards, reversedStates);
+            renderSpreadResult(resultArea, activeSpread, spreadDrawnCards, spreadReversedStates);
             resultArea.style.display = 'block';
 
             setTimeout(() => {
-              reflectionQuestion.textContent = i18n.getThreeReflection();
-              reflectionInput.value = '';
+              const reflQ = document.getElementById('reflection-question-spread');
+              const reflI = document.getElementById('reflection-input-spread');
+              reflQ.textContent = i18n.getSpreadReflection(activeSpread.reflectionKeys);
+              reflI.value = '';
               reflectionArea.style.display = 'block';
               resetBtn.style.display = 'inline-block';
             }, 400);
           }, 600);
         }
       });
+
+      cardsArea.appendChild(posEl);
     });
 
     drawBtn.style.display = 'none';
-    spreadArea.style.display = 'flex';
+    cardsArea.style.display = 'flex';
   });
 
   // Save
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
-      const question = document.getElementById('question-input-three')?.value || '';
+      const question = document.getElementById('question-input-spread')?.value || '';
+      const reflInput = document.getElementById('reflection-input-spread');
       journal.saveReading({
-        type: 'three',
+        type: activeSpread?.id || 'spread',
         question,
-        cards: drawnCards.map((c, i) => ({ name: c.name, reversed: reversedStates[i] })),
-        reflection: reflectionInput.value,
+        cards: spreadDrawnCards.map((c, i) => ({ name: c.name, reversed: spreadReversedStates[i] })),
+        reflection: reflInput.value,
       });
       showToast(i18n.t('toast.saved'));
-      reflectionArea.style.display = 'none';
+      document.getElementById('reflection-area-spread').style.display = 'none';
     });
   }
 
   // Skip
   if (skipBtn) {
     skipBtn.addEventListener('click', () => {
-      const question = document.getElementById('question-input-three')?.value || '';
+      const question = document.getElementById('question-input-spread')?.value || '';
       journal.saveReading({
-        type: 'three',
+        type: activeSpread?.id || 'spread',
         question,
-        cards: drawnCards.map((c, i) => ({ name: c.name, reversed: reversedStates[i] })),
+        cards: spreadDrawnCards.map((c, i) => ({ name: c.name, reversed: spreadReversedStates[i] })),
         reflection: '',
       });
-      reflectionArea.style.display = 'none';
+      document.getElementById('reflection-area-spread').style.display = 'none';
     });
   }
 
   // Reset
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      drawnCards = [];
-      flippedCount = 0;
-      spreadArea.style.display = 'none';
-      resultArea.style.display = 'none';
-      reflectionArea.style.display = 'none';
+      spreadDrawnCards = [];
+      spreadFlippedCount = 0;
+      document.getElementById('spread-cards-area').style.display = 'none';
+      document.getElementById('spread-cards-area').innerHTML = '';
+      document.getElementById('spread-result').style.display = 'none';
+      document.getElementById('reflection-area-spread').style.display = 'none';
       resetBtn.style.display = 'none';
       drawBtn.style.display = 'inline-block';
     });
   }
 }
 
-function renderThreeResult(container, cards, reversedStates) {
-  const posLabels = [
-    i18n.t('three.past') || 'Past',
-    i18n.t('three.present') || 'Present',
-    i18n.t('three.future') || 'Future',
-  ];
-
-  container.innerHTML = '<div class="three-card-reading">' + cards.map((card, idx) => {
+function renderSpreadResult(container, spread, cards, reversedStates) {
+  const html = cards.map((card, idx) => {
     const reversed = reversedStates[idx];
     const orientation = reversed
       ? (i18n.t('result.reversed') || 'Reversed ↺')
       : (i18n.t('result.upright') || 'Upright');
     const meaning = reversed ? card.reversed : card.upright;
+    const posLabel = i18n.t(spread.positions[idx].labelKey) || `Position ${idx + 1}`;
 
     return `
       <div class="reading-position-result">
-        <p class="position-title">${posLabels[idx]}</p>
+        <p class="position-title">${posLabel}</p>
         <h3 class="result-card-name">${card.name}</h3>
         <p class="result-orientation">${orientation}</p>
         <p class="result-meaning">${meaning}</p>
       </div>
     `;
-  }).join('') + '</div>';
+  }).join('');
+
+  container.innerHTML = `<div class="three-card-reading">${html}</div>`;
 }
 
 /* ═══════════════════════════════════════

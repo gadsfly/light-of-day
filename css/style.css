@@ -880,14 +880,126 @@ body {
 }
 
 /* ═══════════════════════════════════════
-   THREE CARD SPREAD
+   SPREAD PICKER & UNIVERSAL SPREAD
    ═══════════════════════════════════════ */
-.three-card-spread {
+
+/* Category filters */
+.spread-category-filters {
   display: flex;
   justify-content: center;
-  gap: 2rem;
-  margin: 2rem 0;
+  gap: 0.5rem;
   flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.filter-btn {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.filter-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.filter-btn.active {
+  background: var(--gold);
+  color: var(--bg-primary);
+  border-color: var(--gold);
+}
+
+/* Spread grid */
+.spread-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.spread-tile {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 1.3rem 1.1rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.spread-tile:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-3px);
+}
+
+.spread-tile-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.spread-tile-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem;
+}
+
+.spread-tile-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.7rem;
+  line-height: 1.4;
+}
+
+.spread-tile-count {
+  font-size: 0.72rem;
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+/* Active spread view */
+.spread-active {
+  text-align: center;
+}
+
+.spread-back-btn {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+}
+
+.spread-active-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--gold);
+  margin: 0 0 0.4rem;
+}
+
+.spread-active-desc {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem;
+}
+
+/* Dynamic card area */
+.spread-cards-area {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 2rem 0;
 }
 
 .spread-position {
@@ -895,6 +1007,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+  animation: cardSlideIn 0.5s ease-out both;
 }
 
 .position-label {
@@ -904,10 +1017,17 @@ body {
   letter-spacing: 2px;
 }
 
-.spread-position:nth-child(1) .tarot-card { animation: cardSlideIn 0.5s ease-out 0.2s both; }
-.spread-position:nth-child(2) .tarot-card { animation: cardSlideIn 0.5s ease-out 0.5s both; }
-.spread-position:nth-child(3) .tarot-card { animation: cardSlideIn 0.5s ease-out 0.8s both; }
+/* Shrink cards for large spreads */
+.spread-cards-area .tarot-card-sm {
+  width: 120px;
+  height: 192px;
+}
 
+.spread-cards-area .tarot-card-sm .card-back-design {
+  padding: 10px;
+}
+
+/* Results */
 .three-card-reading { display: flex; flex-direction: column; gap: 1.5rem; }
 
 .reading-position-result {
@@ -1291,8 +1411,8 @@ body {
     --card-height: 256px;
   }
 
-  .three-card-spread { gap: 1rem; }
-  .three-card-spread .tarot-card { width: var(--card-width-sm); height: var(--card-height-sm); }
+  .spread-cards-area { gap: 1rem; }
+  .spread-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 
   .library-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.7rem; }
 
@@ -1309,15 +1429,16 @@ body {
 @media (max-width: 480px) {
   .hero-title { font-size: 1.8rem; }
 
-  .three-card-spread {
-    flex-direction: column;
-    align-items: center;
+  .spread-cards-area {
+    gap: 0.8rem;
   }
 
-  .three-card-spread .tarot-card {
-    width: var(--card-width);
-    height: var(--card-height);
+  .spread-cards-area .tarot-card-sm {
+    width: 100px;
+    height: 160px;
   }
+
+  .spread-grid { grid-template-columns: 1fr 1fr; }
 
   .library-grid { grid-template-columns: repeat(3, 1fr); }
 
