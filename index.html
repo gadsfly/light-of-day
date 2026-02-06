@@ -1,28 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dawn" data-lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Light of Day — Tarot Reading</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Noto+Serif+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
 </head>
 <body>
-    <!-- Animated star background -->
+    <!-- Ambient background -->
     <div id="stars-container" class="stars-container"></div>
 
     <!-- Navigation -->
     <nav class="nav">
         <a href="#" class="nav-brand" data-page="home">✦ Light of Day ✦</a>
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+        <div class="nav-right">
+            <div class="nav-controls">
+                <button class="nav-icon-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+                    <span class="theme-icon-sun">☀</span>
+                    <span class="theme-icon-moon">☽</span>
+                </button>
+                <button class="nav-icon-btn" id="lang-toggle" title="切换中文">
+                    <span class="lang-label">中</span>
+                </button>
+            </div>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+        </div>
         <div class="nav-links" id="nav-links">
-            <a href="#" data-page="home" class="nav-link active">Home</a>
-            <a href="#" data-page="single" class="nav-link">Single Draw</a>
-            <a href="#" data-page="three-card" class="nav-link">Past · Present · Future</a>
-            <a href="#" data-page="library" class="nav-link">Card Library</a>
+            <a href="#" data-page="home" class="nav-link active" data-i18n="nav.home">Home</a>
+            <a href="#" data-page="single" class="nav-link" data-i18n="nav.single">Draw</a>
+            <a href="#" data-page="three-card" class="nav-link" data-i18n="nav.three">Three Cards</a>
+            <a href="#" data-page="journal" class="nav-link" data-i18n="nav.journal">Journal</a>
+            <a href="#" data-page="library" class="nav-link" data-i18n="nav.library">Library</a>
         </div>
     </nav>
 
@@ -31,47 +43,41 @@
         <div class="hero">
             <div class="hero-glow"></div>
             <h1 class="hero-title">Light of Day</h1>
-            <p class="hero-subtitle">Illuminate your path with the ancient wisdom of the Tarot</p>
+            <p class="hero-subtitle" data-i18n="home.subtitle">A quiet space to listen to yourself</p>
             <div class="hero-cards-row">
                 <div class="hero-card floating-card" style="--delay: 0s; --rotation: -15deg;">
-                    <div class="card-back-design mini">
-                        <div class="card-back-pattern"></div>
-                        <span class="card-back-symbol">☽</span>
-                    </div>
+                    <div class="card-back-design mini"><div class="card-back-pattern"></div><span class="card-back-symbol">☽</span></div>
                 </div>
                 <div class="hero-card floating-card" style="--delay: 0.5s; --rotation: 0deg;">
-                    <div class="card-back-design mini">
-                        <div class="card-back-pattern"></div>
-                        <span class="card-back-symbol">✦</span>
-                    </div>
+                    <div class="card-back-design mini"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div>
                 </div>
                 <div class="hero-card floating-card" style="--delay: 1s; --rotation: 15deg;">
-                    <div class="card-back-design mini">
-                        <div class="card-back-pattern"></div>
-                        <span class="card-back-symbol">☀</span>
-                    </div>
+                    <div class="card-back-design mini"><div class="card-back-pattern"></div><span class="card-back-symbol">☀</span></div>
                 </div>
             </div>
+
+            <div class="welcome-message">
+                <p data-i18n="home.welcome">You don't need to have a question ready. Sometimes the cards just want to sit with you for a while. Take a breath. There's no rush here.</p>
+            </div>
+
             <div class="hero-buttons">
-                <button class="btn-primary glow-pulse" data-page="single">
-                    ✦ Begin Your Reading ✦
-                </button>
+                <button class="btn-primary glow-pulse" data-page="single" data-i18n="home.begin">✦ Draw a Card ✦</button>
             </div>
             <div class="hero-features">
-                <div class="feature">
+                <div class="feature" data-page="single">
                     <span class="feature-icon">🎴</span>
-                    <h3>Single Draw</h3>
-                    <p>Draw one card for quick guidance</p>
+                    <h3 data-i18n="home.feat1.title">Draw a Card</h3>
+                    <p data-i18n="home.feat1.desc">One card, one moment of clarity</p>
                 </div>
-                <div class="feature">
+                <div class="feature" data-page="three-card">
                     <span class="feature-icon">🔮</span>
-                    <h3>Three Card Spread</h3>
-                    <p>Past, Present, and Future revealed</p>
+                    <h3 data-i18n="home.feat2.title">Three Cards</h3>
+                    <p data-i18n="home.feat2.desc">Where you've been, where you are, where you're going</p>
                 </div>
-                <div class="feature">
-                    <span class="feature-icon">📖</span>
-                    <h3>Card Library</h3>
-                    <p>Explore all 78 cards and their meanings</p>
+                <div class="feature" data-page="journal">
+                    <span class="feature-icon">📔</span>
+                    <h3 data-i18n="home.feat3.title">Your Journal</h3>
+                    <p data-i18n="home.feat3.desc">A private space for your reflections</p>
                 </div>
             </div>
         </div>
@@ -80,12 +86,13 @@
     <!-- ========== SINGLE DRAW PAGE ========== -->
     <section id="page-single" class="page">
         <div class="reading-container">
-            <h2 class="section-title">Draw a Card</h2>
-            <p class="section-subtitle">Focus on your question, then let the cards speak...</p>
+            <h2 class="section-title" data-i18n="single.title">Draw a Card</h2>
+            <p class="section-subtitle" data-i18n="single.subtitle">Ask something, or simply see what comes</p>
 
             <div class="question-input-container">
                 <input type="text" id="question-input" 
-                       placeholder="What weighs on your mind?" 
+                       data-i18n-placeholder="single.placeholder"
+                       placeholder="What's on your mind? (optional)" 
                        class="question-input" autocomplete="off">
             </div>
 
@@ -99,91 +106,80 @@
                 </div>
             </div>
 
-            <button class="btn-primary" id="draw-btn">
-                ✦ Shuffle &amp; Draw ✦
-            </button>
+            <button class="btn-primary" id="draw-btn" data-i18n="single.draw">✦ Shuffle &amp; Draw ✦</button>
 
-            <!-- Drawn card appears here -->
             <div class="drawn-card-area" id="drawn-card-area" style="display:none;">
                 <div class="tarot-card" id="drawn-card">
                     <div class="card-inner">
                         <div class="card-front" id="card-front-single"></div>
                         <div class="card-back">
-                            <div class="card-back-design">
-                                <div class="card-back-pattern"></div>
-                                <span class="card-back-symbol">✦</span>
-                            </div>
+                            <div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div>
                         </div>
                     </div>
                 </div>
-                <p class="flip-hint" id="flip-hint">~ Click the card to reveal ~</p>
+                <p class="flip-hint" id="flip-hint" data-i18n="single.flip">~ Tap the card to reveal ~</p>
             </div>
 
-            <!-- Reading result -->
             <div class="reading-result" id="reading-result" style="display:none;"></div>
 
-            <button class="btn-secondary" id="reset-single-btn" style="display:none;">
-                ✦ Draw Again ✦
-            </button>
+            <!-- Reflection prompt -->
+            <div class="reflection-area" id="reflection-area-single" style="display:none;">
+                <div class="reflection-prompt">
+                    <p class="reflection-question" id="reflection-question-single"></p>
+                    <textarea id="reflection-input-single" class="reflection-input" rows="4"
+                              data-i18n-placeholder="reflect.placeholder"
+                              placeholder="Whatever comes to mind... there are no wrong answers"></textarea>
+                    <div class="reflection-actions">
+                        <button class="btn-gentle" id="save-reflection-single-btn" data-i18n="reflect.save">💜 Save to Journal</button>
+                        <button class="btn-ghost" id="skip-reflection-single-btn" data-i18n="reflect.skip">Not right now</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-secondary" id="reset-single-btn" style="display:none;" data-i18n="single.again">✦ Draw Again ✦</button>
         </div>
     </section>
 
     <!-- ========== THREE CARD SPREAD PAGE ========== -->
     <section id="page-three-card" class="page">
         <div class="reading-container">
-            <h2 class="section-title">Past · Present · Future</h2>
-            <p class="section-subtitle">Three cards to illuminate your timeline</p>
+            <h2 class="section-title" data-i18n="three.title">Past · Present · Future</h2>
+            <p class="section-subtitle" data-i18n="three.subtitle">Three cards to gently illuminate your path</p>
 
             <div class="question-input-container">
                 <input type="text" id="question-input-three" 
-                       placeholder="What do you seek guidance on?" 
+                       data-i18n-placeholder="three.placeholder"
+                       placeholder="What do you seek clarity on? (optional)" 
                        class="question-input" autocomplete="off">
             </div>
 
-            <button class="btn-primary" id="draw-three-btn">
-                ✦ Shuffle &amp; Draw Three ✦
-            </button>
+            <button class="btn-primary" id="draw-three-btn" data-i18n="three.draw">✦ Shuffle &amp; Draw Three ✦</button>
 
             <div class="three-card-spread" id="three-card-spread" style="display:none;">
                 <div class="spread-position" data-position="past">
-                    <h3 class="position-label">Past</h3>
+                    <h3 class="position-label" data-i18n="three.past">Past</h3>
                     <div class="tarot-card" data-spread-index="0">
                         <div class="card-inner">
                             <div class="card-front"></div>
-                            <div class="card-back">
-                                <div class="card-back-design">
-                                    <div class="card-back-pattern"></div>
-                                    <span class="card-back-symbol">✦</span>
-                                </div>
-                            </div>
+                            <div class="card-back"><div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div></div>
                         </div>
                     </div>
                 </div>
                 <div class="spread-position" data-position="present">
-                    <h3 class="position-label">Present</h3>
+                    <h3 class="position-label" data-i18n="three.present">Present</h3>
                     <div class="tarot-card" data-spread-index="1">
                         <div class="card-inner">
                             <div class="card-front"></div>
-                            <div class="card-back">
-                                <div class="card-back-design">
-                                    <div class="card-back-pattern"></div>
-                                    <span class="card-back-symbol">✦</span>
-                                </div>
-                            </div>
+                            <div class="card-back"><div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div></div>
                         </div>
                     </div>
                 </div>
                 <div class="spread-position" data-position="future">
-                    <h3 class="position-label">Future</h3>
+                    <h3 class="position-label" data-i18n="three.future">Future</h3>
                     <div class="tarot-card" data-spread-index="2">
                         <div class="card-inner">
                             <div class="card-front"></div>
-                            <div class="card-back">
-                                <div class="card-back-design">
-                                    <div class="card-back-pattern"></div>
-                                    <span class="card-back-symbol">✦</span>
-                                </div>
-                            </div>
+                            <div class="card-back"><div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div></div>
                         </div>
                     </div>
                 </div>
@@ -191,32 +187,63 @@
 
             <div class="reading-result" id="three-card-result" style="display:none;"></div>
 
-            <button class="btn-secondary" id="reset-three-btn" style="display:none;">
-                ✦ Draw Again ✦
-            </button>
+            <div class="reflection-area" id="reflection-area-three" style="display:none;">
+                <div class="reflection-prompt">
+                    <p class="reflection-question" id="reflection-question-three"></p>
+                    <textarea id="reflection-input-three" class="reflection-input" rows="4"
+                              data-i18n-placeholder="reflect.placeholder"
+                              placeholder="Whatever comes to mind... there are no wrong answers"></textarea>
+                    <div class="reflection-actions">
+                        <button class="btn-gentle" id="save-reflection-three-btn" data-i18n="reflect.save">💜 Save to Journal</button>
+                        <button class="btn-ghost" id="skip-reflection-three-btn" data-i18n="reflect.skip">Not right now</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-secondary" id="reset-three-btn" style="display:none;" data-i18n="three.again">✦ Draw Again ✦</button>
+        </div>
+    </section>
+
+    <!-- ========== JOURNAL PAGE ========== -->
+    <section id="page-journal" class="page">
+        <div class="journal-container">
+            <h2 class="section-title" data-i18n="journal.title">Your Journal</h2>
+            <p class="section-subtitle" data-i18n="journal.subtitle">Every reading is a conversation with yourself</p>
+
+            <div class="journal-stats" id="journal-stats"></div>
+
+            <div class="journal-empty" id="journal-empty" style="display:none;">
+                <div class="empty-icon">📔</div>
+                <p data-i18n="journal.empty">Your journal is waiting. Draw a card, and your story begins here.</p>
+                <button class="btn-primary" data-page="single" data-i18n="journal.first">✦ Draw Your First Card ✦</button>
+            </div>
+
+            <div class="journal-timeline" id="journal-timeline"></div>
+
+            <div class="journal-actions" id="journal-actions" style="display:none;">
+                <button class="btn-ghost btn-small" id="clear-journal-btn" data-i18n="journal.clear">Clear All Entries</button>
+            </div>
         </div>
     </section>
 
     <!-- ========== CARD LIBRARY PAGE ========== -->
     <section id="page-library" class="page">
         <div class="library-container">
-            <h2 class="section-title">Card Library</h2>
-            <p class="section-subtitle">Explore the wisdom of all 78 Tarot cards</p>
+            <h2 class="section-title" data-i18n="library.title">Card Library</h2>
+            <p class="section-subtitle" data-i18n="library.subtitle">Explore the wisdom of all 78 cards</p>
             <div class="library-filters">
-                <button class="filter-btn active" data-filter="all">All (78)</button>
-                <button class="filter-btn" data-filter="major">Major Arcana</button>
-                <button class="filter-btn" data-filter="wands">🔥 Wands</button>
-                <button class="filter-btn" data-filter="cups">💧 Cups</button>
-                <button class="filter-btn" data-filter="swords">💨 Swords</button>
-                <button class="filter-btn" data-filter="pentacles">🌿 Pentacles</button>
+                <button class="filter-btn active" data-filter="all" data-i18n="library.all">All (78)</button>
+                <button class="filter-btn" data-filter="major" data-i18n="library.major">Major Arcana</button>
+                <button class="filter-btn" data-filter="wands">🔥 <span data-i18n="library.wands">Wands</span></button>
+                <button class="filter-btn" data-filter="cups">💧 <span data-i18n="library.cups">Cups</span></button>
+                <button class="filter-btn" data-filter="swords">💨 <span data-i18n="library.swords">Swords</span></button>
+                <button class="filter-btn" data-filter="pentacles">🌿 <span data-i18n="library.pentacles">Pentacles</span></button>
             </div>
-            <div class="library-grid" id="library-grid">
-                <!-- Populated by JS -->
-            </div>
+            <div class="library-grid" id="library-grid"></div>
         </div>
     </section>
 
-    <!-- ========== CARD DETAIL MODAL ========== -->
+    <!-- Modal -->
     <div class="modal" id="card-modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
@@ -225,14 +252,19 @@
         </div>
     </div>
 
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
     <!-- Footer -->
     <footer class="footer">
         <p class="footer-brand">✦ Light of Day ✦</p>
-        <p class="footer-subtitle">The cards illuminate, but you choose the path.</p>
-        <p class="footer-copy">&copy; 2026 &mdash; All card designs are original. No copyrighted artwork used.</p>
+        <p class="footer-subtitle" data-i18n="footer.line1">The cards illuminate, but you choose the path.</p>
+        <p class="footer-copy" data-i18n="footer.line2">&copy; 2026 — Free &amp; open source. Made with care.</p>
     </footer>
 
+    <script src="js/i18n.js"></script>
     <script src="js/tarot-data.js"></script>
+    <script src="js/journal.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

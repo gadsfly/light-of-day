@@ -1,491 +1,615 @@
-/**
- * Light of Day — Tarot Reading Application
- * Pure vanilla JS, no dependencies.
- */
+/* ═══════════════════════════════════════════════════
+   Light of Day — Main Application (v2)
+   Theme toggle • Language toggle • Reflection prompts
+   Journal integration • Reading history
+   ═══════════════════════════════════════════════════ */
 
-(function () {
-  'use strict';
+document.addEventListener('DOMContentLoaded', () => {
+  /* ──────────── Init ──────────── */
+  i18n.init();
+  i18n.updateToggleButton();
+  initTheme();
+  createStars();
+  setupNavigation();
+  setupSingleDraw();
+  setupThreeCardDraw();
+  setupLibrary();
+  setupModal();
+  setupThemeToggle();
+  setupLangToggle();
+  setupJournalPage();
+});
 
-  // ═══════════════════════════════════════
-  //  State
-  // ═══════════════════════════════════════
-  const state = {
-    currentPage: 'home',
-    singleCard: null,
-    singleReversed: false,
-    singleFlipped: false,
-    threeCards: [],
-    threeReversed: [],
-    threeFlipped: [false, false, false],
-    threeAllFlipped: false,
-    isDrawing: false,
-  };
+/* ═══════════════════════════════════════
+   THEME
+   ═══════════════════════════════════════ */
+function initTheme() {
+  const saved = localStorage.getItem('lod_theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+}
 
-  // ═══════════════════════════════════════
-  //  Star Background
-  // ═══════════════════════════════════════
-  function createStars() {
-    const container = document.getElementById('stars-container');
-    if (!container) return;
-    const count = Math.min(120, Math.floor(window.innerWidth * window.innerHeight / 8000));
-    for (let i = 0; i < count; i++) {
-      const star = document.createElement('div');
-      star.className = 'star';
-      star.style.left = Math.random() * 100 + '%';
-      star.style.top = Math.random() * 100 + '%';
-      const size = Math.random() * 2.5 + 0.5;
-      star.style.width = size + 'px';
-      star.style.height = size + 'px';
-      star.style.setProperty('--duration', (Math.random() * 4 + 2) + 's');
-      star.style.setProperty('--max-opacity', (Math.random() * 0.6 + 0.2).toString());
-      star.style.animationDelay = (Math.random() * 5) + 's';
-      container.appendChild(star);
+function setupThemeToggle() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dawn' ? 'night' : 'dawn';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('lod_theme', next);
+  });
+}
+
+/* ═══════════════════════════════════════
+   LANGUAGE TOGGLE
+   ═══════════════════════════════════════ */
+function setupLangToggle() {
+  const btn = document.getElementById('lang-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    i18n.toggle();
+    // Re-render dynamic content
+    if (document.getElementById('page-journal').classList.contains('active')) {
+      journal.renderPage();
+    }
+    if (document.getElementById('page-library').classList.contains('active')) {
+      renderLibrary(currentFilter);
+    }
+  });
+}
+
+/* ═══════════════════════════════════════
+   STAR / AMBIENT BACKGROUND
+   ═══════════════════════════════════════ */
+function createStars() {
+  const container = document.getElementById('stars-container');
+  if (!container) return;
+  const count = window.innerWidth < 768 ? 50 : 100;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 3 + 1;
+    star.style.width = `${size}px`;
+    star.style.height = `${size}px`;
+    star.style.left = `${Math.random() * 100}%`;
+    star.style.top = `${Math.random() * 100}%`;
+    star.style.setProperty('--duration', `${Math.random() * 4 + 3}s`);
+    star.style.setProperty('--max-opacity', `${Math.random() * 0.5 + 0.3}`);
+    star.style.animationDelay = `${Math.random() * 5}s`;
+    container.appendChild(star);
+  }
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════ */
+function setupNavigation() {
+  const navLinks = document.querySelectorAll('[data-page]');
+  const pages = document.querySelectorAll('.page');
+  const navToggle = document.getElementById('nav-toggle');
+  const navLinksContainer = document.getElementById('nav-links');
+
+  function navigateTo(pageId) {
+    pages.forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(`page-${pageId}`);
+    if (target) target.classList.add('active');
+
+    // Update active nav link
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll(`.nav-link[data-page="${pageId}"]`).forEach(l => l.classList.add('active'));
+
+    // Close mobile menu
+    if (navLinksContainer) navLinksContainer.classList.remove('open');
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Render journal when navigating to it
+    if (pageId === 'journal') {
+      journal.renderPage();
     }
   }
 
-  // ═══════════════════════════════════════
-  //  Navigation
-  // ═══════════════════════════════════════
-  function initNavigation() {
-    // Nav links
-    document.querySelectorAll('[data-page]').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        navigateTo(el.dataset.page);
-        // Close mobile nav
-        document.getElementById('nav-links')?.classList.remove('open');
-      });
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pageId = link.dataset.page;
+      if (pageId) navigateTo(pageId);
     });
+  });
 
-    // Mobile hamburger
-    document.getElementById('nav-toggle')?.addEventListener('click', () => {
-      document.getElementById('nav-links')?.classList.toggle('open');
+  // Mobile toggle
+  if (navToggle) {
+    navToggle.addEventListener('click', () => {
+      navLinksContainer.classList.toggle('open');
     });
   }
 
-  function navigateTo(page) {
-    state.currentPage = page;
+  // Expose for external use
+  window.navigateTo = navigateTo;
+}
 
-    // Update nav active state
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.classList.toggle('active', link.dataset.page === page);
-    });
+/* ═══════════════════════════════════════
+   SINGLE CARD DRAW
+   ═══════════════════════════════════════ */
+function setupSingleDraw() {
+  const drawBtn = document.getElementById('draw-btn');
+  const drawnCardArea = document.getElementById('drawn-card-area');
+  const drawnCard = document.getElementById('drawn-card');
+  const cardFront = document.getElementById('card-front-single');
+  const flipHint = document.getElementById('flip-hint');
+  const readingResult = document.getElementById('reading-result');
+  const resetBtn = document.getElementById('reset-single-btn');
+  const deckArea = document.getElementById('deck-area-single');
+  const deck = document.getElementById('card-deck-single');
+  const reflectionArea = document.getElementById('reflection-area-single');
+  const reflectionQuestion = document.getElementById('reflection-question-single');
+  const reflectionInput = document.getElementById('reflection-input-single');
+  const saveBtn = document.getElementById('save-reflection-single-btn');
+  const skipBtn = document.getElementById('skip-reflection-single-btn');
 
-    // Show/hide pages
-    document.querySelectorAll('.page').forEach(p => {
-      p.classList.remove('active');
-    });
-    const target = document.getElementById('page-' + page);
-    if (target) {
-      target.classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
+  let currentCard = null;
+  let isReversed = false;
+  let isFlipped = false;
+  let isDrawing = false;
 
-  // ═══════════════════════════════════════
-  //  Card Drawing Logic
-  // ═══════════════════════════════════════
-  function shuffleDeck() {
-    // Fisher-Yates shuffle on a copy of the deck
-    const deck = [...TAROT_DECK];
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-  }
+  if (!drawBtn) return;
 
-  function isReversed() {
-    return Math.random() < 0.3; // 30% chance of reversed
-  }
+  drawBtn.addEventListener('click', () => {
+    if (isDrawing) return;
+    isDrawing = true;
 
-  // ═══════════════════════════════════════
-  //  Card Rendering
-  // ═══════════════════════════════════════
-  function renderCardFront(card) {
-    const suitClass = card.suit ? 'suit-' + card.suit : 'suit-major';
-    const suitColor = card.suit ? SUIT_META[card.suit].color : 'var(--gold)';
-    const numeral = card.arcana === 'major' ? card.numeral : (ROMAN[card.numeral] || card.numeral);
+    // Reset state
+    drawnCardArea.style.display = 'none';
+    readingResult.style.display = 'none';
+    reflectionArea.style.display = 'none';
+    resetBtn.style.display = 'none';
+    drawnCard.classList.remove('flipped', 'reversed');
+    isFlipped = false;
 
-    return `
-      <div class="card-front-content ${suitClass}">
-        <div class="card-numeral">${numeral}</div>
-        <div class="card-symbol-large">${card.symbol}</div>
-        <div class="card-name-display">${card.name}</div>
-        <div class="card-keywords-display">${card.keywords.slice(0, 3).join(' · ')}</div>
-        ${card.suit ? `<div class="card-suit-icon">${SUIT_META[card.suit].icon}</div>` : ''}
-      </div>
-    `;
-  }
+    // Pick a random card
+    const shuffled = [...TAROT_DECK].sort(() => Math.random() - 0.5);
+    currentCard = shuffled[0];
+    isReversed = Math.random() < 0.3;
 
-  function renderReadingResult(card, reversed, position) {
-    const meaning = reversed ? card.reversed : card.upright;
-    const orientLabel = reversed ? '⟲ Reversed' : '⟳ Upright';
+    // Shuffle animation
+    deck.classList.add('shuffling');
+    drawBtn.style.display = 'none';
 
-    let html = '';
-    if (position) {
-      html += `<div class="position-title">${position}</div>`;
-    }
-    html += `
-      <div class="result-card-name">${card.symbol} ${card.name}</div>
-      <div class="result-orientation">${orientLabel}</div>
-      <div class="result-keywords">
-        ${card.keywords.map(k => `<span class="result-keyword">${k}</span>`).join('')}
-      </div>
-      <div class="result-meaning">${meaning}</div>
-      <div class="result-element-info">
-        ${card.element ? `Element: ${card.element}` : ''}
-        ${card.zodiac ? ` · Ruled by: ${card.zodiac}` : ''}
-        ${card.suit ? ` · Suit: ${SUIT_META[card.suit].name} (${SUIT_META[card.suit].theme})` : ''}
-      </div>
-    `;
-    return html;
-  }
-
-  // ═══════════════════════════════════════
-  //  Sparkle Effect
-  // ═══════════════════════════════════════
-  function createSparkle(element) {
-    const rect = element.getBoundingClientRect();
-    const sparkleContainer = document.createElement('div');
-    sparkleContainer.className = 'sparkle';
-    sparkleContainer.style.left = rect.left + 'px';
-    sparkleContainer.style.top = rect.top + 'px';
-    sparkleContainer.style.width = rect.width + 'px';
-    sparkleContainer.style.height = rect.height + 'px';
-
-    for (let i = 0; i < 20; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'sparkle-particle';
-      const angle = (Math.PI * 2 / 20) * i;
-      const distance = 40 + Math.random() * 60;
-      particle.style.left = '50%';
-      particle.style.top = '50%';
-      particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
-      particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
-      particle.style.animationDelay = (Math.random() * 0.2) + 's';
-      sparkleContainer.appendChild(particle);
-    }
-
-    document.body.appendChild(sparkleContainer);
-    setTimeout(() => sparkleContainer.remove(), 1200);
-  }
-
-  // ═══════════════════════════════════════
-  //  Single Card Draw
-  // ═══════════════════════════════════════
-  function initSingleDraw() {
-    const drawBtn = document.getElementById('draw-btn');
-    const resetBtn = document.getElementById('reset-single-btn');
-    const drawnCardArea = document.getElementById('drawn-card-area');
-    const drawnCard = document.getElementById('drawn-card');
-    const readingResult = document.getElementById('reading-result');
-    const deckArea = document.getElementById('deck-area-single');
-    const flipHint = document.getElementById('flip-hint');
-
-    drawBtn?.addEventListener('click', async () => {
-      if (state.isDrawing) return;
-      state.isDrawing = true;
-
-      // Reset
-      drawnCard.classList.remove('flipped', 'reversed');
-      drawnCardArea.style.display = 'none';
-      readingResult.style.display = 'none';
-      resetBtn.style.display = 'none';
-      flipHint.style.display = '';
-      state.singleFlipped = false;
-
-      // Shuffle animation
-      const deck = document.getElementById('card-deck-single');
-      deck.classList.add('shuffling');
-      await sleep(600);
+    setTimeout(() => {
       deck.classList.remove('shuffling');
       deck.classList.add('shuffling-2');
-      await sleep(700);
-      deck.classList.remove('shuffling-2');
 
-      // Draw a card
-      const shuffled = shuffleDeck();
-      state.singleCard = shuffled[0];
-      state.singleReversed = isReversed();
+      setTimeout(() => {
+        deck.classList.remove('shuffling-2');
+        deckArea.style.display = 'none';
 
-      // Render card front
-      document.getElementById('card-front-single').innerHTML = renderCardFront(state.singleCard);
+        // Show the drawn card
+        buildCardFront(cardFront, currentCard);
+        drawnCardArea.style.display = 'flex';
+        drawnCard.classList.add('card-enter');
+        flipHint.style.display = 'block';
+        if (isReversed) drawnCard.classList.add('reversed');
 
-      // Hide deck, show drawn card
-      drawBtn.style.display = 'none';
-      deckArea.style.display = 'none';
-      drawnCardArea.style.display = 'flex';
-      drawnCard.classList.add('card-enter');
+        isDrawing = false;
+      }, 600);
+    }, 500);
+  });
 
-      if (state.singleReversed) {
-        drawnCard.classList.add('reversed');
-      }
-
-      state.isDrawing = false;
-    });
-
-    // Card flip
-    drawnCard?.addEventListener('click', () => {
-      if (state.singleFlipped) return;
-      state.singleFlipped = true;
-
+  // Flip on click
+  if (drawnCard) {
+    drawnCard.addEventListener('click', () => {
+      if (isFlipped || !currentCard) return;
+      isFlipped = true;
       drawnCard.classList.add('flipped');
-      createSparkle(drawnCard);
       flipHint.style.display = 'none';
 
-      // Show reading after flip animation
-      setTimeout(() => {
-        readingResult.innerHTML = renderReadingResult(
-          state.singleCard,
-          state.singleReversed
-        );
-        readingResult.style.display = 'block';
-        resetBtn.style.display = '';
-      }, 900);
-    });
+      // Sparkle effect
+      createSparkles(drawnCard);
 
-    // Reset
-    resetBtn?.addEventListener('click', () => {
+      // Show result
+      setTimeout(() => {
+        renderSingleResult(readingResult, currentCard, isReversed);
+        readingResult.style.display = 'block';
+
+        // Show reflection prompt
+        setTimeout(() => {
+          reflectionQuestion.textContent = i18n.getReflection();
+          reflectionInput.value = '';
+          reflectionArea.style.display = 'block';
+          resetBtn.style.display = 'inline-block';
+        }, 400);
+      }, 600);
+    });
+  }
+
+  // Save reflection
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const question = document.getElementById('question-input')?.value || '';
+      journal.saveReading({
+        type: 'single',
+        question,
+        cards: [{ name: currentCard.name, reversed: isReversed }],
+        reflection: reflectionInput.value,
+      });
+      showToast(i18n.t('toast.saved'));
+      reflectionArea.style.display = 'none';
+    });
+  }
+
+  // Skip reflection (still save reading without reflection)
+  if (skipBtn) {
+    skipBtn.addEventListener('click', () => {
+      const question = document.getElementById('question-input')?.value || '';
+      journal.saveReading({
+        type: 'single',
+        question,
+        cards: [{ name: currentCard.name, reversed: isReversed }],
+        reflection: '',
+      });
+      reflectionArea.style.display = 'none';
+    });
+  }
+
+  // Reset
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      currentCard = null;
+      isFlipped = false;
       drawnCardArea.style.display = 'none';
       readingResult.style.display = 'none';
+      reflectionArea.style.display = 'none';
       resetBtn.style.display = 'none';
-      const drawBtn = document.getElementById('draw-btn');
-      drawBtn.style.display = '';
-      document.getElementById('deck-area-single').style.display = '';
+      deckArea.style.display = 'flex';
+      drawBtn.style.display = 'inline-block';
       drawnCard.classList.remove('flipped', 'reversed', 'card-enter');
-      state.singleFlipped = false;
-      state.singleCard = null;
     });
   }
+}
 
-  // ═══════════════════════════════════════
-  //  Three Card Spread
-  // ═══════════════════════════════════════
-  function initThreeCardSpread() {
-    const drawBtn = document.getElementById('draw-three-btn');
-    const resetBtn = document.getElementById('reset-three-btn');
-    const spreadContainer = document.getElementById('three-card-spread');
-    const readingResult = document.getElementById('three-card-result');
+function renderSingleResult(container, card, reversed) {
+  const orientation = reversed
+    ? (i18n.t('result.reversed') || 'Reversed ↺')
+    : (i18n.t('result.upright') || 'Upright');
+  const meaning = reversed ? card.reversed : card.upright;
+  const keywords = card.keywords || [];
 
-    drawBtn?.addEventListener('click', async () => {
-      if (state.isDrawing) return;
-      state.isDrawing = true;
+  container.innerHTML = `
+    <h3 class="result-card-name">${card.name}</h3>
+    <p class="result-orientation">${orientation}</p>
+    <div class="result-keywords">
+      ${keywords.map(k => `<span class="result-keyword">${k}</span>`).join('')}
+    </div>
+    <p class="result-meaning">${meaning}</p>
+    ${card.element || card.zodiac ? `
+    <div class="result-element-info">
+      ${card.element ? `${i18n.t('result.element') || 'Element'}: ${card.element}` : ''}
+      ${card.element && card.zodiac ? ' · ' : ''}
+      ${card.zodiac ? `${i18n.t('result.zodiac') || 'Zodiac'}: ${card.zodiac}` : ''}
+    </div>` : ''}
+  `;
+}
 
-      // Reset
-      spreadContainer.style.display = 'none';
-      readingResult.style.display = 'none';
-      resetBtn.style.display = 'none';
-      state.threeFlipped = [false, false, false];
-      state.threeAllFlipped = false;
+/* ═══════════════════════════════════════
+   THREE CARD SPREAD
+   ═══════════════════════════════════════ */
+function setupThreeCardDraw() {
+  const drawBtn = document.getElementById('draw-three-btn');
+  const spreadArea = document.getElementById('three-card-spread');
+  const resultArea = document.getElementById('three-card-result');
+  const resetBtn = document.getElementById('reset-three-btn');
+  const reflectionArea = document.getElementById('reflection-area-three');
+  const reflectionQuestion = document.getElementById('reflection-question-three');
+  const reflectionInput = document.getElementById('reflection-input-three');
+  const saveBtn = document.getElementById('save-reflection-three-btn');
+  const skipBtn = document.getElementById('skip-reflection-three-btn');
 
-      // Reset card classes
-      spreadContainer.querySelectorAll('.tarot-card').forEach(card => {
-        card.classList.remove('flipped', 'reversed');
-      });
+  let drawnCards = [];
+  let reversedStates = [];
+  let flippedCount = 0;
 
-      await sleep(400);
+  if (!drawBtn) return;
 
-      // Draw three cards
-      const shuffled = shuffleDeck();
-      state.threeCards = [shuffled[0], shuffled[1], shuffled[2]];
-      state.threeReversed = [isReversed(), isReversed(), isReversed()];
-
-      // Render card fronts
-      const positions = spreadContainer.querySelectorAll('.spread-position');
-      positions.forEach((pos, i) => {
-        const frontEl = pos.querySelector('.card-front');
-        frontEl.innerHTML = renderCardFront(state.threeCards[i]);
-
-        const cardEl = pos.querySelector('.tarot-card');
-        if (state.threeReversed[i]) {
-          cardEl.classList.add('reversed');
-        }
-      });
-
-      // Show spread
-      drawBtn.style.display = 'none';
-      spreadContainer.style.display = 'flex';
-      state.isDrawing = false;
-    });
-
-    // Card flip (click individual cards)
-    spreadContainer?.querySelectorAll('.tarot-card').forEach((cardEl, index) => {
-      cardEl.addEventListener('click', () => {
-        if (state.threeFlipped[index]) return;
-        state.threeFlipped[index] = true;
-
-        cardEl.classList.add('flipped');
-        createSparkle(cardEl);
-
-        // Check if all flipped
-        if (state.threeFlipped.every(f => f) && !state.threeAllFlipped) {
-          state.threeAllFlipped = true;
-          setTimeout(() => showThreeCardReading(), 900);
-        }
-      });
-    });
-
-    function showThreeCardReading() {
-      const positions = ['Past', 'Present', 'Future'];
-      const html = `
-        <div class="three-card-reading">
-          ${state.threeCards.map((card, i) => `
-            <div class="reading-position-result">
-              ${renderReadingResult(card, state.threeReversed[i], positions[i])}
-            </div>
-          `).join('')}
-        </div>
-      `;
-      readingResult.innerHTML = html;
-      readingResult.style.display = 'block';
-      resetBtn.style.display = '';
-    }
-
+  drawBtn.addEventListener('click', () => {
     // Reset
-    resetBtn?.addEventListener('click', () => {
-      spreadContainer.style.display = 'none';
-      readingResult.style.display = 'none';
+    spreadArea.style.display = 'none';
+    resultArea.style.display = 'none';
+    reflectionArea.style.display = 'none';
+    resetBtn.style.display = 'none';
+    flippedCount = 0;
+
+    // Pick 3 unique cards
+    const shuffled = [...TAROT_DECK].sort(() => Math.random() - 0.5);
+    drawnCards = shuffled.slice(0, 3);
+    reversedStates = drawnCards.map(() => Math.random() < 0.3);
+
+    // Build card fronts
+    const positions = spreadArea.querySelectorAll('.spread-position');
+    positions.forEach((pos, idx) => {
+      const card = drawnCards[idx];
+      const tarotCard = pos.querySelector('.tarot-card');
+      const cardFront = pos.querySelector('.card-front');
+      tarotCard.classList.remove('flipped', 'reversed');
+      buildCardFront(cardFront, card);
+      if (reversedStates[idx]) tarotCard.classList.add('reversed');
+
+      // Remove old listener
+      const newCard = tarotCard.cloneNode(true);
+      tarotCard.parentNode.replaceChild(newCard, tarotCard);
+
+      newCard.addEventListener('click', () => {
+        if (newCard.classList.contains('flipped')) return;
+        newCard.classList.add('flipped');
+        createSparkles(newCard);
+        flippedCount++;
+
+        // All flipped? Show reading
+        if (flippedCount === 3) {
+          setTimeout(() => {
+            renderThreeResult(resultArea, drawnCards, reversedStates);
+            resultArea.style.display = 'block';
+
+            setTimeout(() => {
+              reflectionQuestion.textContent = i18n.getThreeReflection();
+              reflectionInput.value = '';
+              reflectionArea.style.display = 'block';
+              resetBtn.style.display = 'inline-block';
+            }, 400);
+          }, 600);
+        }
+      });
+    });
+
+    drawBtn.style.display = 'none';
+    spreadArea.style.display = 'flex';
+  });
+
+  // Save
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const question = document.getElementById('question-input-three')?.value || '';
+      journal.saveReading({
+        type: 'three',
+        question,
+        cards: drawnCards.map((c, i) => ({ name: c.name, reversed: reversedStates[i] })),
+        reflection: reflectionInput.value,
+      });
+      showToast(i18n.t('toast.saved'));
+      reflectionArea.style.display = 'none';
+    });
+  }
+
+  // Skip
+  if (skipBtn) {
+    skipBtn.addEventListener('click', () => {
+      const question = document.getElementById('question-input-three')?.value || '';
+      journal.saveReading({
+        type: 'three',
+        question,
+        cards: drawnCards.map((c, i) => ({ name: c.name, reversed: reversedStates[i] })),
+        reflection: '',
+      });
+      reflectionArea.style.display = 'none';
+    });
+  }
+
+  // Reset
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      drawnCards = [];
+      flippedCount = 0;
+      spreadArea.style.display = 'none';
+      resultArea.style.display = 'none';
+      reflectionArea.style.display = 'none';
       resetBtn.style.display = 'none';
-      drawBtn.style.display = '';
-      spreadContainer.querySelectorAll('.tarot-card').forEach(card => {
-        card.classList.remove('flipped', 'reversed');
-      });
-      state.threeCards = [];
-      state.threeFlipped = [false, false, false];
-      state.threeAllFlipped = false;
+      drawBtn.style.display = 'inline-block';
     });
   }
+}
 
-  // ═══════════════════════════════════════
-  //  Card Library
-  // ═══════════════════════════════════════
-  function initLibrary() {
-    const grid = document.getElementById('library-grid');
-    if (!grid) return;
+function renderThreeResult(container, cards, reversedStates) {
+  const posLabels = [
+    i18n.t('three.past') || 'Past',
+    i18n.t('three.present') || 'Present',
+    i18n.t('three.future') || 'Future',
+  ];
 
-    function renderLibrary(filter) {
-      grid.innerHTML = '';
+  container.innerHTML = '<div class="three-card-reading">' + cards.map((card, idx) => {
+    const reversed = reversedStates[idx];
+    const orientation = reversed
+      ? (i18n.t('result.reversed') || 'Reversed ↺')
+      : (i18n.t('result.upright') || 'Upright');
+    const meaning = reversed ? card.reversed : card.upright;
 
-      const filtered = filter === 'all'
-        ? TAROT_DECK
-        : filter === 'major'
-          ? TAROT_DECK.filter(c => c.arcana === 'major')
-          : TAROT_DECK.filter(c => c.suit === filter);
-
-      filtered.forEach((card, i) => {
-        const suitClass = card.suit ? 'suit-' + card.suit : 'suit-major';
-        const numeral = card.arcana === 'major' ? card.numeral : (ROMAN[card.numeral] || card.numeral);
-
-        const div = document.createElement('div');
-        div.className = 'library-card';
-        div.style.animationDelay = (i * 30) + 'ms';
-        div.innerHTML = `
-          <div class="card-mini ${suitClass}">
-            <div class="card-mini-numeral">${numeral}</div>
-            <div class="card-mini-symbol">${card.symbol}</div>
-            <div class="card-mini-name">${card.name}</div>
-          </div>
-        `;
-        div.addEventListener('click', () => openCardModal(card));
-        grid.appendChild(div);
-      });
-    }
-
-    // Filters
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderLibrary(btn.dataset.filter);
-      });
-    });
-
-    // Initial render
-    renderLibrary('all');
-  }
-
-  // ═══════════════════════════════════════
-  //  Card Detail Modal
-  // ═══════════════════════════════════════
-  function openCardModal(card) {
-    const modal = document.getElementById('card-modal');
-    const body = document.getElementById('modal-body');
-
-    const numeral = card.arcana === 'major' ? card.numeral : (ROMAN[card.numeral] || card.numeral);
-
-    body.innerHTML = `
-      <div class="modal-card-header">
-        <span class="modal-card-symbol">${card.symbol}</span>
-        <div class="modal-card-name">${card.name}</div>
-        <div class="modal-card-numeral">${numeral} ${card.suit ? '· ' + SUIT_META[card.suit].name : '· Major Arcana'}</div>
-      </div>
-
-      <div class="result-keywords" style="justify-content:center; margin-bottom:1.5rem;">
-        ${card.keywords.map(k => `<span class="result-keyword">${k}</span>`).join('')}
-      </div>
-
-      <div class="modal-section">
-        <div class="modal-section-title">⟳ Upright Meaning</div>
-        <p>${card.upright}</p>
-      </div>
-
-      <div class="modal-section">
-        <div class="modal-section-title">⟲ Reversed Meaning</div>
-        <p>${card.reversed}</p>
-      </div>
-
-      <div class="modal-meta">
-        ${card.element ? `<div class="modal-meta-item">Element: <span>${card.element}</span></div>` : ''}
-        ${card.zodiac ? `<div class="modal-meta-item">Ruled by: <span>${card.zodiac}</span></div>` : ''}
-        ${card.suit ? `<div class="modal-meta-item">Theme: <span>${SUIT_META[card.suit].theme}</span></div>` : ''}
+    return `
+      <div class="reading-position-result">
+        <p class="position-title">${posLabels[idx]}</p>
+        <h3 class="result-card-name">${card.name}</h3>
+        <p class="result-orientation">${orientation}</p>
+        <p class="result-meaning">${meaning}</p>
       </div>
     `;
+  }).join('') + '</div>';
+}
 
-    modal.classList.add('active');
+/* ═══════════════════════════════════════
+   CARD RENDERING HELPERS
+   ═══════════════════════════════════════ */
+function buildCardFront(el, card) {
+  const suitClass = card.arcana === 'major' ? 'suit-major' : `suit-${card.suit}`;
+  el.innerHTML = `
+    <div class="card-front-content ${suitClass}">
+      <span class="card-numeral">${ROMAN[card.numeral] || card.numeral || ''}</span>
+      <span class="card-symbol-large">${card.symbol || '✦'}</span>
+      <span class="card-name-display">${card.name}</span>
+      <span class="card-keywords-display">${(card.keywords || []).slice(0, 3).join(' · ')}</span>
+      <span class="card-suit-icon">${SUIT_META[card.suit]?.symbol || '✦'}</span>
+    </div>
+  `;
+}
+
+function createSparkles(element) {
+  const rect = element.getBoundingClientRect();
+  const container = document.createElement('div');
+  container.className = 'sparkle';
+  container.style.left = `${rect.left + rect.width / 2}px`;
+  container.style.top = `${rect.top + rect.height / 2}px`;
+  document.body.appendChild(container);
+
+  for (let i = 0; i < 12; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'sparkle-particle';
+    const angle = (Math.PI * 2 * i) / 12;
+    const distance = 40 + Math.random() * 40;
+    particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+    particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+    particle.style.animationDelay = `${Math.random() * 0.2}s`;
+    container.appendChild(particle);
   }
 
-  function initModal() {
-    const modal = document.getElementById('card-modal');
-    const closeBtn = document.getElementById('modal-close');
-    const overlay = modal?.querySelector('.modal-overlay');
+  setTimeout(() => container.remove(), 1000);
+}
 
-    closeBtn?.addEventListener('click', () => modal.classList.remove('active'));
-    overlay?.addEventListener('click', () => modal.classList.remove('active'));
+/* ═══════════════════════════════════════
+   CARD LIBRARY
+   ═══════════════════════════════════════ */
+let currentFilter = 'all';
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal?.classList.contains('active')) {
-        modal.classList.remove('active');
+function setupLibrary() {
+  const filters = document.querySelectorAll('.filter-btn');
+  renderLibrary('all');
+
+  filters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filters.forEach(f => f.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderLibrary(currentFilter);
+    });
+  });
+}
+
+function renderLibrary(filter) {
+  const grid = document.getElementById('library-grid');
+  if (!grid) return;
+
+  let cards = TAROT_DECK;
+  if (filter === 'major') cards = TAROT_DECK.filter(c => c.arcana === 'major');
+  else if (filter !== 'all') cards = TAROT_DECK.filter(c => c.suit === filter);
+
+  grid.innerHTML = cards.map(card => {
+    const suitClass = card.arcana === 'major' ? 'suit-major' : `suit-${card.suit}`;
+    return `
+      <div class="library-card" data-card-id="${card.id}">
+        <div class="card-mini ${suitClass}">
+          <span class="card-mini-numeral">${ROMAN[card.numeral] || card.numeral || ''}</span>
+          <span class="card-mini-symbol">${card.symbol || '✦'}</span>
+          <span class="card-mini-name">${card.name}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Click to open modal
+  grid.querySelectorAll('.library-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const cardId = parseInt(el.dataset.cardId);
+      const card = TAROT_DECK.find(c => c.id === cardId);
+      if (card) openModal(card);
+    });
+  });
+}
+
+/* ═══════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════ */
+function setupModal() {
+  const modal = document.getElementById('card-modal');
+  const overlay = modal?.querySelector('.modal-overlay');
+  const closeBtn = document.getElementById('modal-close');
+
+  if (overlay) overlay.addEventListener('click', () => closeModal());
+  if (closeBtn) closeBtn.addEventListener('click', () => closeModal());
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+}
+
+function openModal(card) {
+  const modal = document.getElementById('card-modal');
+  const body = document.getElementById('modal-body');
+  if (!modal || !body) return;
+
+  const suitInfo = SUIT_META[card.suit];
+  const arcanaLabel = card.arcana === 'major'
+    ? (i18n.t('library.major') || 'Major Arcana')
+    : `${suitInfo?.name || card.suit}`;
+
+  body.innerHTML = `
+    <div class="modal-card-header">
+      <span class="modal-card-symbol">${card.symbol || '✦'}</span>
+      <h2 class="modal-card-name">${card.name}</h2>
+      <p class="modal-card-numeral">${ROMAN[card.numeral] || ''} · ${arcanaLabel}</p>
+    </div>
+
+    <div class="modal-section">
+      <h3 class="modal-section-title">${i18n.t('modal.upright') || 'Upright Meaning'}</h3>
+      <p>${card.upright}</p>
+    </div>
+
+    <div class="modal-section">
+      <h3 class="modal-section-title">${i18n.t('modal.reversed') || 'Reversed Meaning'}</h3>
+      <p>${card.reversed}</p>
+    </div>
+
+    <div class="modal-section">
+      <h3 class="modal-section-title">${i18n.t('modal.keywords') || 'Keywords'}</h3>
+      <div class="result-keywords">${(card.keywords || []).map(k => `<span class="result-keyword">${k}</span>`).join('')}</div>
+    </div>
+
+    <div class="modal-meta">
+      ${card.element ? `<div class="modal-meta-item">${i18n.t('modal.element') || 'Element'}: <span>${card.element}</span></div>` : ''}
+      ${card.zodiac ? `<div class="modal-meta-item">${i18n.t('modal.zodiac') || 'Zodiac'}: <span>${card.zodiac}</span></div>` : ''}
+    </div>
+  `;
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const modal = document.getElementById('card-modal');
+  if (modal) modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+/* ═══════════════════════════════════════
+   JOURNAL PAGE & CLEAR
+   ═══════════════════════════════════════ */
+function setupJournalPage() {
+  const clearBtn = document.getElementById('clear-journal-btn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const msg = i18n.t('journal.confirm_clear') || 'Delete all journal entries? This cannot be undone.';
+      if (confirm(msg)) {
+        journal.clearAll();
+        journal.renderPage();
+        showToast(i18n.t('toast.cleared'));
       }
     });
   }
+}
 
-  // ═══════════════════════════════════════
-  //  Utilities
-  // ═══════════════════════════════════════
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  // ═══════════════════════════════════════
-  //  Initialization
-  // ═══════════════════════════════════════
-  function init() {
-    createStars();
-    initNavigation();
-    initSingleDraw();
-    initThreeCardSpread();
-    initLibrary();
-    initModal();
-
-    console.log('✦ Light of Day — Tarot Reading initialized');
-    console.log(`  ${TAROT_DECK.length} cards loaded`);
-  }
-
-  // Run when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
+/* ═══════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════ */
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
