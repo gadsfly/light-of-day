@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light of Day — Tarot Reading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
+</head>
+<body>
+    <!-- Animated star background -->
+    <div id="stars-container" class="stars-container"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="#" class="nav-brand" data-page="home">✦ Light of Day ✦</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+        <div class="nav-links" id="nav-links">
+            <a href="#" data-page="home" class="nav-link active">Home</a>
+            <a href="#" data-page="single" class="nav-link">Single Draw</a>
+            <a href="#" data-page="three-card" class="nav-link">Past · Present · Future</a>
+            <a href="#" data-page="library" class="nav-link">Card Library</a>
+        </div>
+    </nav>
+
+    <!-- ========== HOME PAGE ========== -->
+    <section id="page-home" class="page active">
+        <div class="hero">
+            <div class="hero-glow"></div>
+            <h1 class="hero-title">Light of Day</h1>
+            <p class="hero-subtitle">Illuminate your path with the ancient wisdom of the Tarot</p>
+            <div class="hero-cards-row">
+                <div class="hero-card floating-card" style="--delay: 0s; --rotation: -15deg;">
+                    <div class="card-back-design mini">
+                        <div class="card-back-pattern"></div>
+                        <span class="card-back-symbol">☽</span>
+                    </div>
+                </div>
+                <div class="hero-card floating-card" style="--delay: 0.5s; --rotation: 0deg;">
+                    <div class="card-back-design mini">
+                        <div class="card-back-pattern"></div>
+                        <span class="card-back-symbol">✦</span>
+                    </div>
+                </div>
+                <div class="hero-card floating-card" style="--delay: 1s; --rotation: 15deg;">
+                    <div class="card-back-design mini">
+                        <div class="card-back-pattern"></div>
+                        <span class="card-back-symbol">☀</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-buttons">
+                <button class="btn-primary glow-pulse" data-page="single">
+                    ✦ Begin Your Reading ✦
+                </button>
+            </div>
+            <div class="hero-features">
+                <div class="feature">
+                    <span class="feature-icon">🎴</span>
+                    <h3>Single Draw</h3>
+                    <p>Draw one card for quick guidance</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🔮</span>
+                    <h3>Three Card Spread</h3>
+                    <p>Past, Present, and Future revealed</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">📖</span>
+                    <h3>Card Library</h3>
+                    <p>Explore all 78 cards and their meanings</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== SINGLE DRAW PAGE ========== -->
+    <section id="page-single" class="page">
+        <div class="reading-container">
+            <h2 class="section-title">Draw a Card</h2>
+            <p class="section-subtitle">Focus on your question, then let the cards speak...</p>
+
+            <div class="question-input-container">
+                <input type="text" id="question-input" 
+                       placeholder="What weighs on your mind?" 
+                       class="question-input" autocomplete="off">
+            </div>
+
+            <div class="deck-area" id="deck-area-single">
+                <div class="card-deck" id="card-deck-single">
+                    <div class="deck-card" style="--i:0;"></div>
+                    <div class="deck-card" style="--i:1;"></div>
+                    <div class="deck-card" style="--i:2;"></div>
+                    <div class="deck-card" style="--i:3;"></div>
+                    <div class="deck-card" style="--i:4;"></div>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="draw-btn">
+                ✦ Shuffle &amp; Draw ✦
+            </button>
+
+            <!-- Drawn card appears here -->
+            <div class="drawn-card-area" id="drawn-card-area" style="display:none;">
+                <div class="tarot-card" id="drawn-card">
+                    <div class="card-inner">
+                        <div class="card-front" id="card-front-single"></div>
+                        <div class="card-back">
+                            <div class="card-back-design">
+                                <div class="card-back-pattern"></div>
+                                <span class="card-back-symbol">✦</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="flip-hint" id="flip-hint">~ Click the card to reveal ~</p>
+            </div>
+
+            <!-- Reading result -->
+            <div class="reading-result" id="reading-result" style="display:none;"></div>
+
+            <button class="btn-secondary" id="reset-single-btn" style="display:none;">
+                ✦ Draw Again ✦
+            </button>
+        </div>
+    </section>
+
+    <!-- ========== THREE CARD SPREAD PAGE ========== -->
+    <section id="page-three-card" class="page">
+        <div class="reading-container">
+            <h2 class="section-title">Past · Present · Future</h2>
+            <p class="section-subtitle">Three cards to illuminate your timeline</p>
+
+            <div class="question-input-container">
+                <input type="text" id="question-input-three" 
+                       placeholder="What do you seek guidance on?" 
+                       class="question-input" autocomplete="off">
+            </div>
+
+            <button class="btn-primary" id="draw-three-btn">
+                ✦ Shuffle &amp; Draw Three ✦
+            </button>
+
+            <div class="three-card-spread" id="three-card-spread" style="display:none;">
+                <div class="spread-position" data-position="past">
+                    <h3 class="position-label">Past</h3>
+                    <div class="tarot-card" data-spread-index="0">
+                        <div class="card-inner">
+                            <div class="card-front"></div>
+                            <div class="card-back">
+                                <div class="card-back-design">
+                                    <div class="card-back-pattern"></div>
+                                    <span class="card-back-symbol">✦</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="spread-position" data-position="present">
+                    <h3 class="position-label">Present</h3>
+                    <div class="tarot-card" data-spread-index="1">
+                        <div class="card-inner">
+                            <div class="card-front"></div>
+                            <div class="card-back">
+                                <div class="card-back-design">
+                                    <div class="card-back-pattern"></div>
+                                    <span class="card-back-symbol">✦</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="spread-position" data-position="future">
+                    <h3 class="position-label">Future</h3>
+                    <div class="tarot-card" data-spread-index="2">
+                        <div class="card-inner">
+                            <div class="card-front"></div>
+                            <div class="card-back">
+                                <div class="card-back-design">
+                                    <div class="card-back-pattern"></div>
+                                    <span class="card-back-symbol">✦</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-result" id="three-card-result" style="display:none;"></div>
+
+            <button class="btn-secondary" id="reset-three-btn" style="display:none;">
+                ✦ Draw Again ✦
+            </button>
+        </div>
+    </section>
+
+    <!-- ========== CARD LIBRARY PAGE ========== -->
+    <section id="page-library" class="page">
+        <div class="library-container">
+            <h2 class="section-title">Card Library</h2>
+            <p class="section-subtitle">Explore the wisdom of all 78 Tarot cards</p>
+            <div class="library-filters">
+                <button class="filter-btn active" data-filter="all">All (78)</button>
+                <button class="filter-btn" data-filter="major">Major Arcana</button>
+                <button class="filter-btn" data-filter="wands">🔥 Wands</button>
+                <button class="filter-btn" data-filter="cups">💧 Cups</button>
+                <button class="filter-btn" data-filter="swords">💨 Swords</button>
+                <button class="filter-btn" data-filter="pentacles">🌿 Pentacles</button>
+            </div>
+            <div class="library-grid" id="library-grid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== CARD DETAIL MODAL ========== -->
+    <div class="modal" id="card-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-brand">✦ Light of Day ✦</p>
+        <p class="footer-subtitle">The cards illuminate, but you choose the path.</p>
+        <p class="footer-copy">&copy; 2026 &mdash; All card designs are original. No copyrighted artwork used.</p>
+    </footer>
+
+    <script src="js/tarot-data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
