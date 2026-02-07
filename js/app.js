@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSingleDraw();
   setupSpreadPicker();
   setupUniversalSpread();
+  setupQuizzes();
   setupLibrary();
   setupModal();
   setupThemeToggle();
@@ -56,6 +57,15 @@ function setupLangToggle() {
     }
     if (document.getElementById('page-library').classList.contains('active')) {
       renderLibrary(currentFilter);
+    }
+    if (document.getElementById('page-quizzes').classList.contains('active')) {
+      const picker = document.getElementById('quiz-picker');
+      if (picker && picker.style.display !== 'none') renderQuizPicker();
+    }
+    // Re-render spread grid if visible
+    if (document.getElementById('page-spreads').classList.contains('active')) {
+      const spicker = document.getElementById('spread-picker');
+      if (spicker && spicker.style.display !== 'none') renderSpreadGrid(currentSpreadCat);
     }
   });
 }
@@ -548,6 +558,188 @@ function renderSpreadResult(container, spread, cards, reversedStates) {
   }).join('');
 
   container.innerHTML = `<div class="three-card-reading">${html}</div>`;
+}
+
+/* ═══════════════════════════════════════
+   PERSONALITY QUIZZES
+   ═══════════════════════════════════════ */
+let activeQuiz = null;
+let quizAnswers = [];
+let quizStep = 0;
+
+function setupQuizzes() {
+  const picker = document.getElementById('quiz-picker');
+  if (!picker) return;
+
+  renderQuizPicker();
+
+  // Wire result buttons
+  const shareBtn = document.getElementById('quiz-share-btn');
+  const retryBtn = document.getElementById('quiz-retry-btn');
+  const backBtn = document.getElementById('quiz-back-btn');
+
+  if (shareBtn) shareBtn.addEventListener('click', copyQuizResult);
+  if (retryBtn) retryBtn.addEventListener('click', () => {
+    if (activeQuiz) startQuiz(activeQuiz.id);
+  });
+  if (backBtn) backBtn.addEventListener('click', resetQuizToMenu);
+}
+
+function renderQuizPicker() {
+  const picker = document.getElementById('quiz-picker');
+  if (!picker) return;
+
+  picker.innerHTML = QUIZZES.map(q => {
+    const name = i18n.t(q.nameKey) || q.id;
+    const desc = i18n.t(q.descKey) || '';
+    return `
+      <div class="quiz-tile" data-quiz-id="${q.id}">
+        <span class="quiz-tile-icon">${q.icon}</span>
+        <h3 class="quiz-tile-name">${name}</h3>
+        <p class="quiz-tile-desc">${desc}</p>
+        <button class="btn-primary quiz-start-btn">${i18n.t('quiz.start') || 'Begin ✦'}</button>
+      </div>
+    `;
+  }).join('');
+
+  picker.querySelectorAll('.quiz-tile').forEach(tile => {
+    tile.querySelector('.quiz-start-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      startQuiz(tile.dataset.quizId);
+    });
+  });
+}
+
+function startQuiz(quizId) {
+  activeQuiz = getQuiz(quizId);
+  if (!activeQuiz) return;
+
+  quizAnswers = [];
+  quizStep = 0;
+
+  document.getElementById('quiz-picker').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-active').style.display = 'block';
+
+  renderQuizStep();
+}
+
+function renderQuizStep() {
+  if (!activeQuiz) return;
+  const total = activeQuiz.questions.length;
+  const q = activeQuiz.questions[quizStep];
+
+  // Progress
+  const bar = document.getElementById('quiz-progress-bar');
+  const text = document.getElementById('quiz-progress-text');
+  const pct = ((quizStep) / total) * 100;
+  bar.style.width = `${pct}%`;
+  const ofWord = i18n.t('quiz.q_of') || 'of';
+  text.textContent = `${quizStep + 1} ${ofWord} ${total}`;
+
+  // Question
+  const qEl = document.getElementById('quiz-question');
+  qEl.textContent = i18n.t(q.textKey) || `Question ${quizStep + 1}`;
+  qEl.classList.remove('quiz-question-enter');
+  void qEl.offsetWidth; // force reflow
+  qEl.classList.add('quiz-question-enter');
+
+  // Options
+  const optEl = document.getElementById('quiz-options');
+  optEl.innerHTML = q.options.map((opt, idx) => {
+    const label = i18n.t(opt.textKey) || `Option ${idx + 1}`;
+    return `<button class="quiz-option" data-opt="${idx}">${label}</button>`;
+  }).join('');
+  optEl.classList.remove('quiz-options-enter');
+  void optEl.offsetWidth;
+  optEl.classList.add('quiz-options-enter');
+
+  optEl.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => selectQuizOption(parseInt(btn.dataset.opt)));
+  });
+}
+
+function selectQuizOption(idx) {
+  quizAnswers.push(idx);
+  quizStep++;
+
+  if (quizStep >= activeQuiz.questions.length) {
+    showQuizResult();
+  } else {
+    renderQuizStep();
+  }
+}
+
+function showQuizResult() {
+  const resultKey = tallyScores(activeQuiz, quizAnswers);
+  const result = activeQuiz.results[resultKey];
+  if (!result) return;
+
+  document.getElementById('quiz-active').style.display = 'none';
+  const resultArea = document.getElementById('quiz-result');
+  const card = document.getElementById('quiz-result-card');
+
+  // Find the tarot card data if it exists
+  const tarotCard = typeof TAROT_DECK !== 'undefined'
+    ? TAROT_DECK.find(c => c.name === result.cardName)
+    : null;
+
+  const title = i18n.t(result.titleKey) || result.cardName;
+  const desc = i18n.t(result.descKey) || '';
+  const yourResult = i18n.t('quiz.your_result') || 'You are...';
+
+  card.innerHTML = `
+    <p class="quiz-result-label">${yourResult}</p>
+    <div class="quiz-result-emoji">${result.emoji}</div>
+    <h2 class="quiz-result-title">${title}</h2>
+    <p class="quiz-result-desc">${desc}</p>
+    ${tarotCard ? `<div class="quiz-result-card-art">
+      <div class="tarot-card flipped">
+        <div class="card-inner">
+          <div class="card-front" id="quiz-card-front"></div>
+          <div class="card-back"><div class="card-back-design"><div class="card-back-pattern"></div><span class="card-back-symbol">✦</span></div></div>
+        </div>
+      </div>
+    </div>` : ''}
+  `;
+
+  // Build card art if available
+  if (tarotCard) {
+    const frontEl = document.getElementById('quiz-card-front');
+    if (frontEl) buildCardFront(frontEl, tarotCard);
+  }
+
+  resultArea.style.display = 'block';
+  resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyQuizResult() {
+  if (!activeQuiz) return;
+  const resultKey = tallyScores(activeQuiz, quizAnswers);
+  const result = activeQuiz.results[resultKey];
+  if (!result) return;
+
+  const quizName = i18n.t(activeQuiz.nameKey) || activeQuiz.id;
+  const cardTitle = i18n.t(result.titleKey) || result.cardName;
+
+  let template = i18n.t('quiz.share_text') || 'I got "{card}" on Light of Day\'s quiz "{quiz}"! ✦';
+  const text = template.replace('{card}', cardTitle).replace('{quiz}', quizName);
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(i18n.t('quiz.copied') || '✨ Copied!');
+  }).catch(() => {
+    showToast(i18n.t('quiz.copied') || '✨ Copied!');
+  });
+}
+
+function resetQuizToMenu() {
+  activeQuiz = null;
+  quizAnswers = [];
+  quizStep = 0;
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-picker').style.display = 'block';
+  renderQuizPicker(); // re-render for language changes
 }
 
 /* ═══════════════════════════════════════

@@ -33,6 +33,7 @@
             <a href="#" data-page="home" class="nav-link active" data-i18n="nav.home">Home</a>
             <a href="#" data-page="single" class="nav-link" data-i18n="nav.single">Draw</a>
             <a href="#" data-page="spreads" class="nav-link" data-i18n="nav.spreads">Spreads</a>
+            <a href="#" data-page="quizzes" class="nav-link" data-i18n="nav.quizzes">Quizzes</a>
             <a href="#" data-page="journal" class="nav-link" data-i18n="nav.journal">Journal</a>
             <a href="#" data-page="library" class="nav-link" data-i18n="nav.library">Library</a>
         </div>
@@ -74,10 +75,15 @@
                     <h3 data-i18n="home.feat2.title">Spreads</h3>
                     <p data-i18n="home.feat2.desc">10 unique spreads — love, self-discovery &amp; more</p>
                 </div>
+                <div class="feature" data-page="quizzes">
+                    <span class="feature-icon">🪞</span>
+                    <h3 data-i18n="home.feat3.title">Personality Quizzes</h3>
+                    <p data-i18n="home.feat3.desc">Which tarot card are you? Find out &amp; share</p>
+                </div>
                 <div class="feature" data-page="journal">
                     <span class="feature-icon">📔</span>
-                    <h3 data-i18n="home.feat3.title">Your Journal</h3>
-                    <p data-i18n="home.feat3.desc">A private space for your reflections</p>
+                    <h3 data-i18n="home.feat4.title">Your Journal</h3>
+                    <p data-i18n="home.feat4.desc">A private space for your reflections</p>
                 </div>
             </div>
         </div>
@@ -194,6 +200,40 @@
         </div>
     </section>
 
+    <!-- ========== QUIZZES PAGE ========== -->
+    <section id="page-quizzes" class="page">
+        <div class="reading-container">
+            <h2 class="section-title" data-i18n="quiz.title">Personality Quizzes</h2>
+            <p class="section-subtitle" data-i18n="quiz.subtitle">Discover yourself through the cards</p>
+
+            <!-- Quiz Picker -->
+            <div id="quiz-picker" class="quiz-picker"></div>
+
+            <!-- Active Quiz -->
+            <div id="quiz-active" class="quiz-active" style="display:none;">
+                <!-- Progress -->
+                <div class="quiz-progress">
+                    <div class="quiz-progress-bar" id="quiz-progress-bar"></div>
+                </div>
+                <p class="quiz-progress-text" id="quiz-progress-text"></p>
+
+                <!-- Question -->
+                <div class="quiz-question" id="quiz-question"></div>
+                <div class="quiz-options" id="quiz-options"></div>
+            </div>
+
+            <!-- Result -->
+            <div id="quiz-result" class="quiz-result" style="display:none;">
+                <div class="quiz-result-card" id="quiz-result-card"></div>
+                <div class="quiz-result-actions">
+                    <button class="btn-primary" id="quiz-share-btn" data-i18n="quiz.share">📋 Copy Result</button>
+                    <button class="btn-secondary" id="quiz-retry-btn" data-i18n="quiz.retry">✦ Try Again ✦</button>
+                    <button class="btn-ghost" id="quiz-back-btn" data-i18n="quiz.back">← All Quizzes</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ========== JOURNAL PAGE ========== -->
     <section id="page-journal" class="page">
         <div class="journal-container">
@@ -255,6 +295,7 @@
     <script src="js/i18n.js"></script>
     <script src="js/tarot-data.js"></script>
     <script src="js/spreads.js"></script>
+    <script src="js/quizzes.js"></script>
     <script src="js/journal.js"></script>
     <script src="js/app.js"></script>
 </body>
