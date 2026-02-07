@@ -4,6 +4,10 @@
    Journal integration • Reading history
    ═══════════════════════════════════════════════════ */
 
+// ── AI Reading Config ──
+// Set this to your deployed Cloudflare Worker URL
+const AI_API_URL = ''; // e.g. 'https://light-of-day-api.yourname.workers.dev'
+
 document.addEventListener('DOMContentLoaded', () => {
   /* ──────────── Init ──────────── */
   i18n.init();
@@ -15,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSpreadPicker();
   setupUniversalSpread();
   setupQuizzes();
+  setupAIReading();
   setupLibrary();
   setupModal();
   setupThemeToggle();
@@ -224,6 +229,9 @@ function setupSingleDraw() {
         renderSingleResult(readingResult, currentCard, isReversed);
         readingResult.style.display = 'block';
 
+        // Show AI reading button
+        showAIButton('single');
+
         // Show reflection prompt
         setTimeout(() => {
           reflectionQuestion.textContent = i18n.getReflection();
@@ -272,6 +280,7 @@ function setupSingleDraw() {
       drawnCardArea.style.display = 'none';
       readingResult.style.display = 'none';
       reflectionArea.style.display = 'none';
+      resetAIArea('single');
       resetBtn.style.display = 'none';
       deckArea.style.display = 'flex';
       drawBtn.style.display = 'inline-block';
@@ -474,6 +483,9 @@ function setupUniversalSpread() {
             renderSpreadResult(resultArea, activeSpread, spreadDrawnCards, spreadReversedStates);
             resultArea.style.display = 'block';
 
+            // Show AI reading button
+            showAIButton('spread');
+
             setTimeout(() => {
               const reflQ = document.getElementById('reflection-question-spread');
               const reflI = document.getElementById('reflection-input-spread');
@@ -532,6 +544,7 @@ function setupUniversalSpread() {
       document.getElementById('spread-cards-area').innerHTML = '';
       document.getElementById('spread-result').style.display = 'none';
       document.getElementById('reflection-area-spread').style.display = 'none';
+      resetAIArea('spread');
       resetBtn.style.display = 'none';
       drawBtn.style.display = 'inline-block';
     });
@@ -740,6 +753,126 @@ function resetQuizToMenu() {
   document.getElementById('quiz-result').style.display = 'none';
   document.getElementById('quiz-picker').style.display = 'block';
   renderQuizPicker(); // re-render for language changes
+}
+
+/* ═══════════════════════════════════════
+   AI READING
+   ═══════════════════════════════════════ */
+function setupAIReading() {
+  // Single draw AI button
+  const singleBtn = document.getElementById('ai-reading-btn-single');
+  if (singleBtn) {
+    singleBtn.addEventListener('click', () => {
+      if (!currentCard) return;
+      const question = document.getElementById('question-input')?.value || '';
+      const cards = [{
+        name: currentCard.name,
+        position: 'Single Draw',
+        reversed: isReversed,
+      }];
+      requestAIReading('single', question, cards, 'Single Card Draw');
+    });
+  }
+
+  // Spread AI button
+  const spreadBtn = document.getElementById('ai-reading-btn-spread');
+  if (spreadBtn) {
+    spreadBtn.addEventListener('click', () => {
+      if (!activeSpread || spreadDrawnCards.length === 0) return;
+      const question = document.getElementById('question-input-spread')?.value || '';
+      const cards = spreadDrawnCards.map((card, idx) => ({
+        name: card.name,
+        position: i18n.t(activeSpread.positions[idx].labelKey) || `Position ${idx + 1}`,
+        reversed: spreadReversedStates[idx],
+      }));
+      const spreadName = i18n.t(activeSpread.nameKey) || activeSpread.id;
+      requestAIReading('spread', question, cards, spreadName);
+    });
+  }
+}
+
+function showAIButton(context) {
+  const area = document.getElementById(`ai-reading-area-${context}`);
+  if (!area) return;
+  // Only show if API is configured
+  if (!AI_API_URL) return;
+  area.style.display = 'block';
+  // Reset sub-elements
+  area.querySelector('.btn-ai').style.display = 'inline-flex';
+  area.querySelector('.btn-ai').disabled = false;
+  const loading = area.querySelector('.ai-reading-loading');
+  const content = area.querySelector('.ai-reading-content');
+  if (loading) loading.style.display = 'none';
+  if (content) { content.style.display = 'none'; content.innerHTML = ''; }
+}
+
+function resetAIArea(context) {
+  const area = document.getElementById(`ai-reading-area-${context}`);
+  if (!area) return;
+  area.style.display = 'none';
+  const btn = area.querySelector('.btn-ai');
+  if (btn) { btn.style.display = 'inline-flex'; btn.disabled = false; }
+  const loading = area.querySelector('.ai-reading-loading');
+  if (loading) loading.style.display = 'none';
+  const content = area.querySelector('.ai-reading-content');
+  if (content) { content.style.display = 'none'; content.innerHTML = ''; }
+}
+
+async function requestAIReading(context, question, cards, spreadType) {
+  if (!AI_API_URL) return;
+
+  const area = document.getElementById(`ai-reading-area-${context}`);
+  const btn = area.querySelector('.btn-ai');
+  const loading = document.getElementById(`ai-loading-${context}`);
+  const content = document.getElementById(`ai-content-${context}`);
+
+  // Show loading
+  btn.disabled = true;
+  btn.style.display = 'none';
+  loading.style.display = 'flex';
+  content.style.display = 'none';
+
+  try {
+    const resp = await fetch(`${AI_API_URL}/api/interpret`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question,
+        cards,
+        spreadType,
+        lang: i18n.currentLang,
+      }),
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const data = await resp.json();
+    const interpretation = data.interpretation || '';
+
+    loading.style.display = 'none';
+    content.innerHTML = `
+      <div class="ai-reading-text">${escapeHtml(interpretation)}</div>
+      <div class="ai-reading-footer">${i18n.t('ai.powered') || 'AI interpretation • for reflection, not prediction'}</div>
+    `;
+    content.style.display = 'block';
+
+  } catch (err) {
+    console.error('AI reading error:', err);
+    loading.style.display = 'none';
+    content.innerHTML = `
+      <div class="ai-reading-text ai-error">${i18n.t('ai.error') || 'The cards are quiet right now. Please try again.'}</div>
+    `;
+    content.style.display = 'block';
+    // Re-show button so they can retry
+    btn.style.display = 'inline-flex';
+    btn.disabled = false;
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 /* ═══════════════════════════════════════

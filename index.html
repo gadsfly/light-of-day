@@ -128,6 +128,19 @@
 
             <div class="reading-result" id="reading-result" style="display:none;"></div>
 
+            <!-- AI Reading -->
+            <div class="ai-reading-area" id="ai-reading-area-single" style="display:none;">
+                <button class="btn-ai" id="ai-reading-btn-single">
+                    <span class="ai-btn-icon">✨</span>
+                    <span data-i18n="ai.get_reading">Get AI Interpretation</span>
+                </button>
+                <div class="ai-reading-loading" id="ai-loading-single" style="display:none;">
+                    <div class="ai-loading-orb"></div>
+                    <p class="ai-loading-text" data-i18n="ai.loading">The cards are speaking...</p>
+                </div>
+                <div class="ai-reading-content" id="ai-content-single" style="display:none;"></div>
+            </div>
+
             <!-- Reflection prompt -->
             <div class="reflection-area" id="reflection-area-single" style="display:none;">
                 <div class="reflection-prompt">
@@ -181,6 +194,19 @@
 
                 <div id="spread-cards-area" class="spread-cards-area" style="display:none;"></div>
                 <div class="reading-result" id="spread-result" style="display:none;"></div>
+
+                <!-- AI Reading -->
+                <div class="ai-reading-area" id="ai-reading-area-spread" style="display:none;">
+                    <button class="btn-ai" id="ai-reading-btn-spread">
+                        <span class="ai-btn-icon">✨</span>
+                        <span data-i18n="ai.get_reading">Get AI Interpretation</span>
+                    </button>
+                    <div class="ai-reading-loading" id="ai-loading-spread" style="display:none;">
+                        <div class="ai-loading-orb"></div>
+                        <p class="ai-loading-text" data-i18n="ai.loading">The cards are speaking...</p>
+                    </div>
+                    <div class="ai-reading-content" id="ai-content-spread" style="display:none;"></div>
+                </div>
 
                 <div class="reflection-area" id="reflection-area-spread" style="display:none;">
                     <div class="reflection-prompt">

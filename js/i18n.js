@@ -177,6 +177,12 @@ const I18N = {
     'toast.cleared': 'Journal cleared',
     'toast.copied': 'Reading copied',
 
+    // AI Reading
+    'ai.get_reading': '✨ Get AI Interpretation',
+    'ai.loading': 'The cards are speaking...',
+    'ai.error': 'The cards are quiet right now. Please try again.',
+    'ai.powered': 'Interpretation by AI • for reflection, not prediction',
+
     // Quiz UI
     'quiz.title': 'Personality Quizzes',
     'quiz.subtitle': 'Discover yourself through the cards',
@@ -550,6 +556,12 @@ const I18N = {
     'toast.saved': '💜 已保存到日记',
     'toast.cleared': '日记已清除',
     'toast.copied': '已复制抽牌结果',
+
+    // AI Reading
+    'ai.get_reading': '✨ AI 解读',
+    'ai.loading': '牌正在说话……',
+    'ai.error': '牌现在很安静。请稍后再试。',
+    'ai.powered': 'AI 解读 • 仅供反思，非预测',
 
     // Quiz UI
     'quiz.title': '人格测试',

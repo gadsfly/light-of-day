@@ -1,0 +1,12 @@
+name = "light-of-day-api"
+main = "index.js"
+compatibility_date = "2024-12-01"
+
+# Set your DeepSeek API key as a secret:
+#   npx wrangler secret put DEEPSEEK_API_KEY
+#
+# Deploy:
+#   cd worker && npx wrangler deploy
+#
+# Your worker URL will be:
+#   https://light-of-day-api.<your-subdomain>.workers.dev
