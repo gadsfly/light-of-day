@@ -4,9 +4,8 @@
    Journal integration • Reading history
    ═══════════════════════════════════════════════════ */
 
-// ── AI Reading Config ──
-// Set this to your deployed Cloudflare Worker URL
-const AI_API_URL = ''; // e.g. 'https://light-of-day-api.yourname.workers.dev'
+// ── AI Reading Config (loaded from js/config.js, which is gitignored) ──
+const AI_API_URL = (window.__LOD_CONFIG && window.__LOD_CONFIG.AI_API_URL) || '';
 
 document.addEventListener('DOMContentLoaded', () => {
   /* ──────────── Init ──────────── */

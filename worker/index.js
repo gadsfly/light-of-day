@@ -16,6 +16,37 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:8080',
 ];
 
+// ── Rate limiter (in-memory, per-worker-instance) ──
+// Cloudflare Workers may have multiple instances, so this is best-effort.
+// For heavier protection, use Cloudflare's paid Rate Limiting rules.
+const RATE_LIMIT = {
+  windowMs: 60_000,   // 1 minute window
+  maxRequests: 5,      // max 5 AI requests per IP per minute
+};
+const ipHits = new Map();  // IP → { count, resetTime }
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const record = ipHits.get(ip);
+
+  if (!record || now > record.resetTime) {
+    ipHits.set(ip, { count: 1, resetTime: now + RATE_LIMIT.windowMs });
+    return false;
+  }
+
+  record.count++;
+  if (record.count > RATE_LIMIT.maxRequests) return true;
+  return false;
+}
+
+// Clean up stale entries periodically (prevent memory leak)
+function pruneRateMap() {
+  const now = Date.now();
+  for (const [ip, record] of ipHits) {
+    if (now > record.resetTime) ipHits.delete(ip);
+  }
+}
+
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
@@ -66,6 +97,14 @@ export default {
       return new Response(null, { status: 204, headers });
     }
 
+    // ── Strict origin check (blocks curl / Postman / foreign sites) ──
+    if (!ALLOWED_ORIGINS.includes(origin)) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
@@ -73,7 +112,26 @@ export default {
       });
     }
 
+    // ── Rate limiting ──
+    const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+    pruneRateMap();
+    if (isRateLimited(clientIP)) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please wait a moment.' }), {
+        status: 429,
+        headers: { ...headers, 'Content-Type': 'application/json', 'Retry-After': '60' },
+      });
+    }
+
     try {
+      // ── Request size guard (reject payloads > 10 KB) ──
+      const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);
+      if (contentLength > 10_240) {
+        return new Response(JSON.stringify({ error: 'Payload too large' }), {
+          status: 413,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+        });
+      }
+
       const body = await request.json();
       const { question, cards, spreadType, lang } = body;
 
